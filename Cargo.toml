@@ -1,5 +1,6 @@
 [workspace]
 members = [
-  "grainfather-proto"
+  "grainfather-proto",
+  "grainfather-control",
 ]
 
