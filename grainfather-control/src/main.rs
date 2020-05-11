@@ -5,6 +5,7 @@ use async_std::task::block_on;
 use bluez::client::*;
 use bluez::interface::controller::*;
 use bluez::interface::event::Event;
+use grainfather_control::EIRData;
 
 #[async_std::main]
 pub async fn main() -> Result<(), Box<dyn Error>> {
@@ -96,6 +97,20 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
               )
             .await?;
         }
+      }
+      Event::DeviceConnected {
+        address,
+        address_type,
+        flags,
+        eir_data,
+      } => {
+        println!(
+          "[{:?}] device connected {} ({:?}) with flags {:?}",
+          controller, address, address_type, flags
+          );
+        let eir_entries = EIRData::from(eir_data.as_ref()).into_iter().collect::<Vec<_>>();
+        println!("Entries: {:?}", eir_entries);
+
       }
       other => {
         println!("got: {:?}", other);
