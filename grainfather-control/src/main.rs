@@ -1,1 +1,107 @@
-pub fn main() {}
+use std::error::Error;
+use bluez::client::*;
+use std::time::Duration;
+use async_std::task::block_on;
+use bluez::client::*;
+use bluez::interface::controller::*;
+use bluez::interface::event::Event;
+
+#[async_std::main]
+pub async fn main() -> Result<(), Box<dyn Error>> {
+  let mut client = BlueZClient::new().unwrap();
+
+  let version = client.get_mgmt_version().await?;
+  println!("management version: {}.{}", version.version, version.revision);
+
+  let controllers = client.get_controller_list().await?;
+
+  // find the first controller we can power on
+  let (controller, info) = controllers
+    .into_iter()
+    .filter_map(|controller| {
+      let info = block_on(client.get_controller_info(controller)).ok()?;
+
+      if info.supported_settings.contains(ControllerSetting::Powered) {
+        Some((controller, info))
+      } else {
+        None
+      }
+    })
+  .nth(0)
+    .expect("no usable controllers found");
+
+  if !info.current_settings.contains(ControllerSetting::Powered) {
+    println!("powering on bluetooth controller {}", controller);
+    client.set_powered(controller, true).await?;
+  }
+
+  // scan for some devices
+  // to do this we'll need to listen for the Device Found event
+  let _gf_1 = [
+    0x00, 0x00, 0xcd, 0xd0, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb
+  ];
+
+  let gf_2 = [
+    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xd0, 0xcd, 0x00, 0x00
+  ];
+
+  let service_ids = vec![gf_2];
+
+  client
+    .start_service_discovery(
+      controller,
+      AddressTypeFlag::LEPublic |
+      AddressTypeFlag::LERandom,
+      127,
+      service_ids.clone(),
+      )
+    .await?;
+
+  // just wait for discovery forever
+  loop {
+    // process() blocks until there is a response to be had
+    let response = client.process().await?;
+
+    match response.event {
+      Event::DeviceFound {
+        address,
+        address_type,
+        flags,
+        rssi,
+        ..
+      } => {
+        println!(
+          "[{:?}] found device {} ({:?})",
+          controller, address, address_type
+          );
+        println!("\tflags: {:?}", flags);
+        println!("\trssi: {:?}", rssi);
+        client.add_device(controller, address, address_type, AddDeviceAction::AutoConnect).await?;
+      }
+      Event::Discovering {
+        discovering,
+        address_type,
+      } => {
+        println!("discovering: {} {:?}", discovering, address_type);
+
+        // if discovery ended, turn it back on
+        if !discovering {
+          client
+            .start_service_discovery(
+              controller,
+              AddressTypeFlag::LEPublic
+              | AddressTypeFlag::LERandom,
+              127,
+              service_ids.clone(),
+              )
+            .await?;
+        }
+      }
+      other => {
+        println!("got: {:?}", other);
+      },
+    }
+
+    std::thread::sleep(Duration::from_millis(50));
+  }
+}
