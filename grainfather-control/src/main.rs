@@ -5,7 +5,7 @@ use async_std::task::block_on;
 use bluez::client::*;
 use bluez::interface::controller::*;
 use bluez::interface::event::Event;
-use grainfather_control::EIRData;
+use grainfather_control::*;
 
 #[async_std::main]
 pub async fn main() -> Result<(), Box<dyn Error>> {
@@ -42,11 +42,11 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
     0x00, 0x00, 0xcd, 0xd0, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb
   ];
 
-  let gf_2 = [
+  let _gf_2 = [
     0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xd0, 0xcd, 0x00, 0x00
   ];
 
-  let service_ids = vec![gf_2];
+  let service_ids = vec![]; //gf_2];
 
   client
     .start_service_discovery(
@@ -69,16 +69,29 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
         address_type,
         flags,
         rssi,
+        eir_data,
         ..
       } => {
-        println!(
-          "[{:?}] found device {} ({:?})",
-          controller, address, address_type
-          );
-        println!("\tflags: {:?}", flags);
-        println!("\trssi: {:?}", rssi);
-        client.add_device(controller, address, address_type, AddDeviceAction::AutoConnect).await?;
-        //client.pair_device(controller, address, address_type, IoCapability::KeyboardDisplay).await?;
+          for entry in EIRData::from(eir_data.as_ref()).into_iter() {
+              if let EIREntry::ManufacturerSpecific(ms) = entry {
+                  if let ManufacturerSpecificEntry::Apple(apple) = ms {
+                      if let AppleEntry::Beacon(beacon) = apple {
+                          if let Beacon::Tilt { color, celsius, gravity, power, .. }  = beacon {
+                              println!(
+                                  "[{:?}] found tilt {} ({:?})",
+                                  controller, address, address_type
+                                  );
+                              println!("\tflags: {:?}", flags);
+                              println!("\trssi: {:?}", rssi);
+                              println!("\tcolor: {:?}", color);
+                              println!("\tcelsius: {:?}", celsius);
+                              println!("\tgravity: {:?}", gravity);
+                              println!("\ttx power: {:?}", power);
+                          }
+                      }
+                  }
+              }
+          }
       }
       Event::Discovering {
         discovering,

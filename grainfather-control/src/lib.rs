@@ -1,4 +1,4 @@
-use byteorder::{ByteOrder, LittleEndian};
+use byteorder::{BigEndian, ByteOrder, LittleEndian};
 use uuid::Uuid;
 
 const EIR_HEADER_SIZE: usize = 2;
@@ -48,20 +48,146 @@ pub enum EIREntry {
     Flags(u8),
     Name(String),
     ServiceIds(Vec<Uuid>),
+    ManufacturerSpecific(ManufacturerSpecificEntry),
     Other(u8, Vec<u8>),
 }
 
 impl EIREntry {
     fn parse(eir_data: &[u8]) -> Self {
-        match eir_data[0] {
-            1 => EIREntry::Flags(eir_data[1]),
-            9 => EIREntry::Name(String::from_utf8_lossy(&eir_data[1..]).into()),
-            7 => EIREntry::ServiceIds(
-                (&eir_data[1..]).chunks(16).map(LittleEndian::read_u128).map(Uuid::from_u128).collect::<Vec<_>>(),
+        let entry_type = eir_data[0];
+        let entry_data = &eir_data[1..];
+
+        match entry_type {
+            0x01 => Self::Flags(entry_data[0]),
+
+            0x07 => Self::ServiceIds(
+                entry_data.chunks(16).map(LittleEndian::read_u128).map(Uuid::from_u128).collect::<Vec<_>>(),
             ),
-            other => EIREntry::Other(other, (&eir_data[1..]).to_vec()),
+
+            0x09 => Self::Name(String::from_utf8_lossy(entry_data).into()),
+
+            0xFF => Self::ManufacturerSpecific(ManufacturerSpecificEntry::parse(entry_data)),
+
+            _ => Self::Other(entry_type, entry_data.to_vec()),
         }
     }
+}
+
+#[derive(Debug)]
+pub enum ManufacturerSpecificEntry {
+    Apple(AppleEntry),
+    Other(u16, Vec<u8>),
+}
+
+impl ManufacturerSpecificEntry {
+    fn parse(data: &[u8]) -> Self {
+        let manufacturer = LittleEndian::read_u16(&data[0..2]);
+        let specific_data = &data[2..];
+
+        match manufacturer {
+            0x004c => Self::Apple(AppleEntry::parse(specific_data)),
+            _ => Self::Other(manufacturer, specific_data.to_vec()),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum AppleEntry {
+    Beacon(Beacon),
+    Other(u8, Vec<u8>),
+}
+
+impl AppleEntry {
+    fn parse(data: &[u8]) -> Self {
+        let entry_type = data[0];
+        let rest = &data[1..];
+
+        match entry_type {
+            0x02 => Self::Beacon(Beacon::parse(rest)),
+            _ => Self::Other(entry_type, rest.to_vec()),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum Beacon {
+    Tilt {
+        color: TiltColor,
+        fahrenheit: u16,
+        celsius: f64,
+        gravity: u16,
+        power: u8,
+    },
+    General {
+        uuid: Uuid,
+        minor: u16,
+        major: u16,
+        power: u8,
+    },
+}
+
+impl Beacon {
+    fn parse(data: &[u8]) -> Self {
+        let size = data[0];
+        assert_eq!(21, size);
+
+        let beacon_data = &data[1..];
+
+        let uuid = BigEndian::read_u128(&beacon_data[0..16]);
+        let major = BigEndian::read_u16(&beacon_data[16..18]);
+        let minor = BigEndian::read_u16(&beacon_data[18..20]);
+        let power = beacon_data[20];
+
+        match uuid {
+            TILT_RED => Self::tilt(TiltColor::Red, major, minor, power),
+            TILT_GREEN => Self::tilt(TiltColor::Green, major, minor, power),
+            TILT_BLACK => Self::tilt(TiltColor::Black, major, minor, power),
+            TILT_PURPLE => Self::tilt(TiltColor::Purple, major, minor, power),
+            TILT_ORANGE => Self::tilt(TiltColor::Orange, major, minor, power),
+            TILT_BLUE => Self::tilt(TiltColor::Blue, major, minor, power),
+            TILT_YELLOW => Self::tilt(TiltColor::Yellow, major, minor, power),
+            TILT_PINK => Self::tilt(TiltColor::Pink, major, minor, power),
+            _ => Self::General {
+                uuid: Uuid::from_u128(uuid),
+                major,
+                minor,
+                power,
+            },
+        }
+    }
+
+    fn tilt(color: TiltColor, fahrenheit: u16, gravity: u16, power: u8) -> Self {
+        let celsius = ((f64::from(fahrenheit) - 32.0) * 5.0) / 9.0;
+
+        Self::Tilt {
+            color,
+            fahrenheit,
+            celsius,
+            gravity,
+            power,
+        }
+    }
+}
+
+const TILT_RED: u128 = 0xA495BB10C5B14B44B5121370F02D74DE;
+const TILT_GREEN: u128 = 0xA495BB20C5B14B44B5121370F02D74DE;
+const TILT_BLACK: u128 = 0xA495BB30C5B14B44B5121370F02D74DE;
+const TILT_PURPLE: u128 = 0xA495BB40C5B14B44B5121370F02D74DE;
+const TILT_ORANGE: u128 = 0xA495BB50C5B14B44B5121370F02D74DE;
+const TILT_BLUE: u128 = 0xA495BB60C5B14B44B5121370F02D74DE;
+const TILT_YELLOW: u128 = 0xA495BB70C5B14B44B5121370F02D74DE;
+const TILT_PINK: u128 = 0xA495BB80C5B14B44B5121370F02D74DE;
+
+#[derive(Debug)]
+pub enum TiltColor {
+    Red,
+    Green,
+    Black,
+    Purple,
+    Orange,
+    Blue,
+    Yellow,
+    Pink,
 }
 
 #[cfg(test)]
