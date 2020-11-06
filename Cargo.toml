@@ -2,5 +2,8 @@
 members = [
   "grainfather-proto",
   "grainfather-control",
+  "dht22-monitor",
 ]
 
+[patch.crates-io]
+dht22_pi = { git = 'https://github.com/philipstears/dht22_pi' }
