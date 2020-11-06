@@ -332,6 +332,7 @@ dependencies = [
  "async-std",
  "bluez",
  "byteorder",
+ "chrono",
  "enumflags2",
  "nom",
  "uuid",
