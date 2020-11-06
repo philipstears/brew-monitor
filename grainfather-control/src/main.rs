@@ -78,6 +78,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
         println!("\tflags: {:?}", flags);
         println!("\trssi: {:?}", rssi);
         client.add_device(controller, address, address_type, AddDeviceAction::AutoConnect).await?;
+        //client.pair_device(controller, address, address_type, IoCapability::KeyboardDisplay).await?;
       }
       Event::Discovering {
         discovering,
