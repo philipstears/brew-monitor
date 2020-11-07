@@ -3,13 +3,14 @@ use std::time::Duration;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 
-use bluez::client::*;
-
 use async_std::task::block_on;
 
 use bluez::client::*;
 use bluez::interface::controller::*;
 use bluez::interface::event::Event;
+
+use btleplug::api::{Central, Peripheral, UUID};
+use btleplug::bluez::{adapter::ConnectedAdapter, manager::Manager};
 
 use bm_bluetooth::*;
 use bm_tilt::*;
@@ -19,18 +20,18 @@ use chrono::prelude::*;
 
 #[async_std::main]
 pub async fn main() -> Result<(), Box<dyn Error>> {
-    let mut client = BlueZClient::new().unwrap();
+    let mut bluez_client = BlueZClient::new().unwrap();
 
-    let version = client.get_mgmt_version().await?;
+    let version = bluez_client.get_mgmt_version().await?;
     eprintln!("management version: {}.{}", version.version, version.revision);
 
-    let controllers = client.get_controller_list().await?;
+    let bluez_controllers = bluez_client.get_controller_list().await?;
 
     // find the first controller we can power on
-    let (controller, info) = controllers
+    let (bluez_controller, bluez_info) = bluez_controllers
         .into_iter()
         .filter_map(|controller| {
-            let info = block_on(client.get_controller_info(controller)).ok()?;
+            let info = block_on(bluez_client.get_controller_info(controller)).ok()?;
 
             if info.supported_settings.contains(ControllerSetting::Powered) {
                 Some((controller, info))
@@ -41,17 +42,22 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
     .nth(0)
         .expect("no usable controllers found");
 
-    if !info.current_settings.contains(ControllerSetting::Powered) {
-        eprintln!("powering on bluetooth controller {}", controller);
-        client.set_powered(controller, true).await?;
+    if !bluez_info.current_settings.contains(ControllerSetting::Powered) {
+        eprintln!("powering on bluetooth controller {}", bluez_controller);
+        bluez_client.set_powered(bluez_controller, true).await?;
     }
+
+    let btle_manager = Manager::new().unwrap();
+    let btle_adapters = btle_manager.adapters().unwrap();
+    let btle_adapter = btle_adapters.into_iter().filter(|adapter| adapter.addr.address == bluez_info.address.as_ref()).nth(0).unwrap();
+    let btle_central = btle_adapter.connect().unwrap();
 
     // NOTE: could filter here to just GF if needed
     let service_ids = vec![];
 
-    client
+    bluez_client
         .start_service_discovery(
-            controller,
+            bluez_controller,
             AddressTypeFlag::LEPublic |
             AddressTypeFlag::LERandom,
             127,
@@ -62,7 +68,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
     // just wait for discovery forever
     loop {
         // process() blocks until there is a response to be had
-        let response = client.process().await?;
+        let response = bluez_client.process().await?;
 
         match response.event {
             Event::DeviceFound {
@@ -81,8 +87,23 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     let centi_celsius = ((i32::from(fahrenheit) - 32) * 500) / 9;
                     println!("at={:?} which={:?} celsius={:?} gravity={:?}", now, color, centi_celsius, gravity);
                 }
-                else if let Ok(gf) = Grainfather::try_from(report2) {
-                    println!("at={:?} grainfather={:?} address={} ({:?})", now, gf, address, address_type);
+                else if let Ok(gf_info) = Grainfather::try_from(report2) {
+                    println!("at={:?} grainfather={:?} address={} ({:?})", now, gf_info, address, address_type);
+
+                    let gf = btle_central
+                        .peripherals()
+                        .into_iter()
+                        .find(|p| p.address().address == address.as_ref())
+                        .unwrap();
+
+                    gf.connect().unwrap();
+
+                    // discover characteristics
+                    gf.discover_characteristics().unwrap();
+
+                    for gf_char in gf.characteristics().iter() {
+                        println!("\t{:?}", gf_char);
+                    }
                 }
 
                 ()
@@ -95,9 +116,9 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
                 // if discovery ended, turn it back on
                 if !discovering {
-                    client
+                    bluez_client
                         .start_service_discovery(
-                            controller,
+                            bluez_controller,
                             AddressTypeFlag::LEPublic
                             | AddressTypeFlag::LERandom,
                             127,
@@ -114,7 +135,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
             } => {
                 eprintln!(
                     "[{:?}] device connected {} ({:?}) with flags {:?}",
-                    controller, address, address_type, flags
+                    bluez_controller, address, address_type, flags
                     );
                 let eir_entries = EIRData::from(eir_data.as_ref()).into_iter().collect::<Vec<_>>();
                 eprintln!("Entries: {:?}", eir_entries);

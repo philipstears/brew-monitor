@@ -2,6 +2,7 @@
 members = [
   "bm",
   "dht22-monitor",
+  "gf",
 
   "bm-bluetooth",
   "bm-tilt",
