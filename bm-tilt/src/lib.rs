@@ -1,4 +1,5 @@
-use bm_bluetooth::Beacon;
+use bm_bluetooth::*;
+use std::convert::{TryFrom, TryInto};
 
 const TILT_RED: u128 = 0xA495BB10C5B14B44B5121370F02D74DE;
 const TILT_GREEN: u128 = 0xA495BB20C5B14B44B5121370F02D74DE;
@@ -28,12 +29,31 @@ pub struct Tilt {
     pub power: i8,
 }
 
-pub enum TiltFromBeaconError {
+pub enum TiltConvertError {
+    NoBeaconFound,
     UnknownUniqueId,
 }
 
-impl std::convert::TryFrom<Beacon> for Tilt {
-    type Error = TiltFromBeaconError;
+impl TryFrom<EIRData<'_>> for Tilt {
+    type Error = TiltConvertError;
+
+    fn try_from(report: EIRData) -> Result<Tilt, Self::Error> {
+        for entry in report.into_iter() {
+            if let EIREntry::ManufacturerSpecific(ms) = entry {
+                if let ManufacturerSpecificEntry::Apple(apple) = ms {
+                    if let AppleEntry::Beacon(beacon) = apple {
+                        return beacon.try_into();
+                    }
+                }
+            }
+        }
+
+        Err(Self::Error::NoBeaconFound)
+    }
+}
+
+impl TryFrom<Beacon> for Tilt {
+    type Error = TiltConvertError;
 
     fn try_from(
         Beacon {

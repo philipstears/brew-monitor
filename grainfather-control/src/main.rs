@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::time::Duration;
 use std::convert::TryFrom;
+use std::convert::TryInto;
 
 use bluez::client::*;
 
@@ -80,14 +81,12 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                 eir_data,
                 ..
             } => {
-                for entry in EIRData::from(eir_data.as_ref()).into_iter() {
-                    if let EIREntry::ManufacturerSpecific(ms) = entry {
-                        if let ManufacturerSpecificEntry::Apple(apple) = ms {
-                            if let AppleEntry::Beacon(beacon) = apple {
-                                log_beacon(beacon);
-                            }
-                        }
-                    }
+                let report = EIRData::from(eir_data.as_ref());
+
+                if let Ok(Tilt { color, fahrenheit, gravity, .. } ) = Tilt::try_from(report)  {
+                    let centi_celsius = ((i32::from(fahrenheit) - 32) * 500) / 9;
+                    let now = Utc::now();
+                    println!("at={:?} which={:?} celsius={:?} gravity={:?}", now, color, centi_celsius, gravity);
                 }
             }
             Event::Discovering {
@@ -129,13 +128,5 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
         }
 
         std::thread::sleep(Duration::from_millis(50));
-    }
-}
-
-fn log_beacon(beacon: Beacon) {
-    if let Ok(Tilt { color, fahrenheit, gravity, .. } ) = Tilt::try_from(beacon) {
-        let centi_celsius = ((i32::from(fahrenheit) - 32) * 500) / 9;
-        let now = Utc::now();
-        println!("at={:?} which={:?} celsius={:?} gravity={:?}", now, color, centi_celsius, gravity);
     }
 }
