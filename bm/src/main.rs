@@ -13,6 +13,7 @@ use bluez::interface::event::Event;
 
 use bm_bluetooth::*;
 use bm_tilt::*;
+use bm_grainfather::*;
 
 use chrono::prelude::*;
 
@@ -45,17 +46,8 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
         client.set_powered(controller, true).await?;
     }
 
-    // scan for some devices
-    // to do this we'll need to listen for the Device Found event
-    let _gf_1 = [
-        0x00, 0x00, 0xcd, 0xd0, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb
-    ];
-
-    let _gf_2 = [
-        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xd0, 0xcd, 0x00, 0x00
-    ];
-
-    let service_ids = vec![]; //gf_2];
+    // NOTE: could filter here to just GF if needed
+    let service_ids = vec![];
 
     client
         .start_service_discovery(
@@ -81,13 +73,19 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                 eir_data,
                 ..
             } => {
-                let report = EIRData::from(eir_data.as_ref());
+                let report1 = EIRData::from(eir_data.as_ref());
+                let report2 = EIRData::from(eir_data.as_ref());
+                let now = Utc::now();
 
-                if let Ok(Tilt { color, fahrenheit, gravity, .. } ) = Tilt::try_from(report)  {
+                if let Ok(Tilt { color, fahrenheit, gravity, .. } ) = Tilt::try_from(report1) {
                     let centi_celsius = ((i32::from(fahrenheit) - 32) * 500) / 9;
-                    let now = Utc::now();
                     println!("at={:?} which={:?} celsius={:?} gravity={:?}", now, color, centi_celsius, gravity);
                 }
+                else if let Ok(gf) = Grainfather::try_from(report2) {
+                    println!("at={:?} grainfather={:?} address={} ({:?})", now, gf, address, address_type);
+                }
+
+                ()
             }
             Event::Discovering {
                 discovering,

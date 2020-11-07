@@ -37,7 +37,7 @@ pub enum TiltConvertError {
 impl TryFrom<EIRData<'_>> for Tilt {
     type Error = TiltConvertError;
 
-    fn try_from(report: EIRData) -> Result<Tilt, Self::Error> {
+    fn try_from(report: EIRData) -> Result<Self, Self::Error> {
         for entry in report.into_iter() {
             if let EIREntry::ManufacturerSpecific(ms) = entry {
                 if let ManufacturerSpecificEntry::Apple(apple) = ms {
@@ -62,7 +62,7 @@ impl TryFrom<Beacon> for Tilt {
             uuid,
             power,
         }: Beacon,
-    ) -> Result<Tilt, Self::Error> {
+    ) -> Result<Self, Self::Error> {
         let color = match uuid.as_u128() {
             TILT_RED => TiltColor::Red,
             TILT_GREEN => TiltColor::Green,

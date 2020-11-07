@@ -16,7 +16,7 @@ chrono = "0.4"
 
 bm-bluetooth = { path = "../bm-bluetooth" }
 bm-tilt = { path = "../bm-tilt" }
-
+bm-grainfather = { path = "../bm-grainfather" }
 
 [dependencies.bluez]
 git = "https://github.com/laptou/bluez-rs"
