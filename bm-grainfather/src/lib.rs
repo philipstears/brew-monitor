@@ -5,6 +5,28 @@ pub const SERVICE_ID: u128 = 0x0000cdd000001000800000805f9b34fb;
 pub const CHARACTERISTIC_ID_READ: u128 = 0x0003cdd100001000800000805f9b0131;
 pub const CHARACTERISTIC_ID_WRITE: u128 = 0x0003cdd200001000800000805f9b0131;
 
+pub enum GrainfatherCommand {
+    ToggleHeat,
+}
+
+impl GrainfatherCommand {
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut output = Vec::with_capacity(19);
+
+        match self {
+            Self::ToggleHeat => {
+                output.push(b'H');
+            }
+        }
+
+        for _ in 0..(19 - output.len()) {
+            output.push(b'0');
+        }
+
+        output
+    }
+}
+
 #[derive(Debug)]
 pub struct Grainfather {}
 
