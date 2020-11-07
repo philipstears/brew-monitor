@@ -96,14 +96,30 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                         .find(|p| p.address().address == address.as_ref())
                         .unwrap();
 
+                    println!("Connecting");
                     gf.connect().unwrap();
 
+                    println!("Obtaining characteristics");
                     // discover characteristics
                     gf.discover_characteristics().unwrap();
 
-                    for gf_char in gf.characteristics().iter() {
-                        println!("\t{:?}", gf_char);
-                    }
+                    let cs = gf.characteristics();
+
+                    let rcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_READ.to_le_bytes());
+                    let rc = cs.iter().find(|c| c.uuid == rcid).unwrap();
+
+                    let wcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
+                    let wc = cs.iter().find(|c| c.uuid == wcid).unwrap();
+
+                    let cmd = vec![72, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32];
+                    println!("Sending command!");
+                    gf.command(&wc, cmd.as_ref()).unwrap();
+
+                    return Ok(());
+
+                    // for gf_char in gf.characteristics().iter() {
+                    //     println!("\t{:?}", gf_char);
+                    // }
                 }
 
                 ()
