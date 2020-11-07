@@ -43,7 +43,7 @@ impl std::convert::TryFrom<Beacon> for Tilt {
             power,
         }: Beacon,
     ) -> Result<Tilt, Self::Error> {
-        let color = match uuid.to_u128_le() {
+        let color = match uuid.as_u128() {
             TILT_RED => TiltColor::Red,
             TILT_GREEN => TiltColor::Green,
             TILT_BLACK => TiltColor::Black,
