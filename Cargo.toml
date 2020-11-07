@@ -3,6 +3,10 @@ members = [
   "grainfather-proto",
   "grainfather-control",
   "dht22-monitor",
+
+  "bm-bluetooth",
+  "bm-tilt",
+  "bm-grainfather",
 ]
 
 [patch.crates-io]

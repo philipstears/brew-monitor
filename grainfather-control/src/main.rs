@@ -1,11 +1,18 @@
 use std::error::Error;
-use bluez::client::*;
 use std::time::Duration;
+use std::convert::TryFrom;
+
+use bluez::client::*;
+
 use async_std::task::block_on;
+
 use bluez::client::*;
 use bluez::interface::controller::*;
 use bluez::interface::event::Event;
-use grainfather_control::*;
+
+use bm_bluetooth::*;
+use bm_tilt::*;
+
 use chrono::prelude::*;
 
 #[async_std::main]
@@ -126,8 +133,9 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn log_beacon(beacon: Beacon) {
-    if let Beacon::Tilt { color, celsius, gravity, .. }  = beacon {
+    if let Ok(Tilt { color, fahrenheit, gravity, .. } ) = Tilt::try_from(beacon) {
+        let centi_celsius = ((i32::from(fahrenheit) - 32) * 500) / 9;
         let now = Utc::now();
-        println!("at={:?} which={:?} celsius={:?} gravity={:?}", now, color, celsius, gravity);
+        println!("at={:?} which={:?} celsius={:?} gravity={:?}", now, color, centi_celsius, gravity);
     }
 }

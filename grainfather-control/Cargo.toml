@@ -14,6 +14,10 @@ byteorder = "1.3.4"
 uuid = "0.8.1"
 chrono = "0.4"
 
+bm-bluetooth = { path = "../bm-bluetooth" }
+bm-tilt = { path = "../bm-tilt" }
+
+
 [dependencies.bluez]
 git = "https://github.com/laptou/bluez-rs"
 branch = "master"

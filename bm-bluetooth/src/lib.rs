@@ -110,20 +110,11 @@ impl AppleEntry {
 }
 
 #[derive(Debug)]
-pub enum Beacon {
-    Tilt {
-        color: TiltColor,
-        fahrenheit: u16,
-        celsius: f64,
-        gravity: u16,
-        power: u8,
-    },
-    General {
-        uuid: Uuid,
-        minor: u16,
-        major: u16,
-        power: u8,
-    },
+pub struct Beacon {
+    pub uuid: Uuid,
+    pub minor: u16,
+    pub major: u16,
+    pub power: i8,
 }
 
 impl Beacon {
@@ -136,58 +127,15 @@ impl Beacon {
         let uuid = BigEndian::read_u128(&beacon_data[0..16]);
         let major = BigEndian::read_u16(&beacon_data[16..18]);
         let minor = BigEndian::read_u16(&beacon_data[18..20]);
-        let power = beacon_data[20];
+        let power = beacon_data[20] as i8;
 
-        match uuid {
-            TILT_RED => Self::tilt(TiltColor::Red, major, minor, power),
-            TILT_GREEN => Self::tilt(TiltColor::Green, major, minor, power),
-            TILT_BLACK => Self::tilt(TiltColor::Black, major, minor, power),
-            TILT_PURPLE => Self::tilt(TiltColor::Purple, major, minor, power),
-            TILT_ORANGE => Self::tilt(TiltColor::Orange, major, minor, power),
-            TILT_BLUE => Self::tilt(TiltColor::Blue, major, minor, power),
-            TILT_YELLOW => Self::tilt(TiltColor::Yellow, major, minor, power),
-            TILT_PINK => Self::tilt(TiltColor::Pink, major, minor, power),
-            _ => Self::General {
-                uuid: Uuid::from_u128(uuid),
-                major,
-                minor,
-                power,
-            },
-        }
-    }
-
-    fn tilt(color: TiltColor, fahrenheit: u16, gravity: u16, power: u8) -> Self {
-        let celsius = ((f64::from(fahrenheit) - 32.0) * 5.0) / 9.0;
-
-        Self::Tilt {
-            color,
-            fahrenheit,
-            celsius,
-            gravity,
+        Self {
+            uuid: Uuid::from_u128(uuid),
+            major,
+            minor,
             power,
         }
     }
-}
-
-const TILT_RED: u128 = 0xA495BB10C5B14B44B5121370F02D74DE;
-const TILT_GREEN: u128 = 0xA495BB20C5B14B44B5121370F02D74DE;
-const TILT_BLACK: u128 = 0xA495BB30C5B14B44B5121370F02D74DE;
-const TILT_PURPLE: u128 = 0xA495BB40C5B14B44B5121370F02D74DE;
-const TILT_ORANGE: u128 = 0xA495BB50C5B14B44B5121370F02D74DE;
-const TILT_BLUE: u128 = 0xA495BB60C5B14B44B5121370F02D74DE;
-const TILT_YELLOW: u128 = 0xA495BB70C5B14B44B5121370F02D74DE;
-const TILT_PINK: u128 = 0xA495BB80C5B14B44B5121370F02D74DE;
-
-#[derive(Debug)]
-pub enum TiltColor {
-    Red,
-    Green,
-    Black,
-    Purple,
-    Orange,
-    Blue,
-    Yellow,
-    Pink,
 }
 
 #[cfg(test)]
