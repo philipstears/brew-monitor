@@ -111,7 +111,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     let wcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
                     let wc = cs.iter().find(|c| c.uuid == wcid).unwrap();
 
-                    let cmd = vec![72, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32];
+                    let cmd = vec![b'H', 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32];
                     println!("Sending command!");
                     gf.command(&wc, cmd.as_ref()).unwrap();
 
