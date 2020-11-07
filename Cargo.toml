@@ -1,7 +1,6 @@
 [workspace]
 members = [
-  "grainfather-proto",
-  "grainfather-control",
+  "bm",
   "dht22-monitor",
 
   "bm-bluetooth",

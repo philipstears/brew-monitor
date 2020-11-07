@@ -1,5 +1,5 @@
 [package]
-name = "grainfather-control"
+name = "bm"
 version = "0.1.0"
 authors = ["philipstears <philip@philipstears.com>"]
 edition = "2018"

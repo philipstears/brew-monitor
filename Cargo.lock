@@ -94,6 +94,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "bm"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "bluez",
+ "bm-bluetooth",
+ "bm-tilt",
+ "byteorder",
+ "chrono",
+ "enumflags2",
+ "nom",
+ "uuid",
+]
+
+[[package]]
 name = "bm-bluetooth"
 version = "0.1.0"
 dependencies = [
@@ -344,25 +359,6 @@ dependencies = [
  "proc-macro-nested",
  "slab",
 ]
-
-[[package]]
-name = "grainfather-control"
-version = "0.1.0"
-dependencies = [
- "async-std",
- "bluez",
- "bm-bluetooth",
- "bm-tilt",
- "byteorder",
- "chrono",
- "enumflags2",
- "nom",
- "uuid",
-]
-
-[[package]]
-name = "grainfather-proto"
-version = "0.1.0"
 
 [[package]]
 name = "hermit-abi"
