@@ -118,13 +118,17 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     let wcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
                     let wc = cs.iter().find(|c| c.uuid == wcid).unwrap();
 
-                    // println!("Requesting Firmware Version");
-                    // let cmd = GrainfatherCommand::GetFirmwareVersion;
-                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    println!("Requesting Firmware Version");
+                    let cmd = GrainfatherCommand::GetFirmwareVersion;
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(100));
 
                     println!("Requesting Voltage and Units");
                     let cmd = GrainfatherCommand::GetVoltageAndUnits;
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(100));
 
                     loop {
                         std::thread::sleep(Duration::from_millis(1000));
