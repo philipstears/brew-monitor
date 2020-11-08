@@ -109,19 +109,19 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     let rc = cs.iter().find(|c| c.uuid == rcid).unwrap();
 
                     gf.on_notification(Box::new(|value_notification| {
-                        let notification = std::str::from_utf8(value_notification.value.as_ref()).unwrap();
-                        println!("Notification: {}", notification);
+                        let notification = GrainfatherNotification::try_from(value_notification.value.as_ref()).unwrap();
+                        println!("Notification: {:?}", notification);
                     }));
 
-                    gf.subscribe(rc);
+                    gf.subscribe(rc).unwrap();
 
                     let wcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
                     let wc = cs.iter().find(|c| c.uuid == wcid).unwrap();
 
-                    let cmd = GrainfatherCommand::ToggleHeat;
+                    // let cmd = GrainfatherCommand::ToggleHeat;
 
-                    println!("Sending command!");
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Sending command!");
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
                     loop {
                         std::thread::sleep(Duration::from_millis(1000));
