@@ -198,51 +198,51 @@ pub enum GrainfatherCommand {
 
 impl GrainfatherCommand {
     pub fn to_vec(&self) -> Vec<u8> {
-        let mut output = Vec::with_capacity(19);
+        let mut output = String::with_capacity(19);
 
         match self {
             Self::GetFirmwareVersion => {
-                output.push(b'X');
+                output.push('X');
             }
 
             Self::GetVoltageAndUnits => {
-                output.push(b'g');
+                output.push('g');
             }
 
             Self::ToggleHeatActive => {
-                output.push(b'H');
+                output.push('H');
             }
 
             Self::SetHeatActive(active) => {
-                output.push(b'K');
+                output.push('K');
 
                 if *active {
-                    output.push(b'1');
+                    output.push('1');
                 } else {
-                    output.push(b'0');
+                    output.push('0');
                 }
             }
 
             Self::TogglePumpActive => {
-                output.push(b'P');
+                output.push('P');
             }
 
             Self::SetPumpActive(active) => {
-                output.push(b'L');
+                output.push('L');
 
                 if *active {
-                    output.push(b'1');
+                    output.push('1');
                 } else {
-                    output.push(b'0');
+                    output.push('0');
                 }
             }
         }
 
         for _ in 0..(19 - output.len()) {
-            output.push(b' ');
+            output.push(' ');
         }
 
-        output
+        output.into()
     }
 }
 
