@@ -200,12 +200,17 @@ pub enum GrainfatherCommand {
 
     // NOTE: minutes is odd, {2, 0} will only run for 1 minute, and {2, 30} will run for 1 minute
     // 30 seconds, {1, 30} and {0, 30} will both run for 30 seconds
-    SetDelayedHeatTimer {
+    EnableDelayedHeatTimer {
         minutes: u32,
         seconds: u8,
     },
 
-    CancelDelayedHeatTimer,
+    CancelActiveTimer,
+
+    UpdateActiveTimer {
+        minutes: u32,
+        seconds: u8,
+    },
 }
 
 impl GrainfatherCommand {
@@ -253,7 +258,7 @@ impl GrainfatherCommand {
                 }
             }
 
-            Self::SetDelayedHeatTimer {
+            Self::EnableDelayedHeatTimer {
                 minutes,
                 seconds,
             } => {
@@ -263,8 +268,18 @@ impl GrainfatherCommand {
                 output.push_str(seconds.to_string().as_ref());
             }
 
-            Self::CancelDelayedHeatTimer => {
+            Self::CancelActiveTimer => {
                 output.push('C');
+            }
+
+            Self::UpdateActiveTimer {
+                minutes,
+                seconds,
+            } => {
+                output.push('W');
+                output.push_str(minutes.to_string().as_ref());
+                output.push(',');
+                output.push_str(seconds.to_string().as_ref());
             }
         }
 

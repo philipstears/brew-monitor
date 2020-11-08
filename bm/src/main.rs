@@ -147,13 +147,19 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     std::thread::sleep(Duration::from_millis(5000));
 
                     println!("Delayed Heat");
-                    let cmd = GrainfatherCommand::SetDelayedHeatTimer { minutes: 2, seconds: 0 };
+                    let cmd = GrainfatherCommand::EnableDelayedHeatTimer { minutes: 2, seconds: 0 };
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(5_000));
+
+                    println!("Update Timer");
+                    let cmd = GrainfatherCommand::UpdateActiveTimer { minutes: 3, seconds: 30 };
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
                     std::thread::sleep(Duration::from_millis(5_000));
 
                     println!("Cancel Delayed Heat");
-                    let cmd = GrainfatherCommand::CancelDelayedHeatTimer;
+                    let cmd = GrainfatherCommand::CancelActiveTimer;
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
                     std::thread::sleep(Duration::from_millis(5000));
