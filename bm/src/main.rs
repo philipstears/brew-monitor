@@ -134,90 +134,90 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
                     std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Requesting Boil Temp");
-                    let cmd = GrainfatherCommand::GetBoilTemperature;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Requesting Boil Temp");
+                    // let cmd = GrainfatherCommand::GetBoilTemperature;
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Set Local Boil temp");
-                    let cmd = GrainfatherCommand::SetLocalBoilTemperature(98.5);
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Set Local Boil temp");
+                    // let cmd = GrainfatherCommand::SetLocalBoilTemperature(98.5);
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Requesting Boil Temp Again");
-                    let cmd = GrainfatherCommand::GetBoilTemperature;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Requesting Boil Temp Again");
+                    // let cmd = GrainfatherCommand::GetBoilTemperature;
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Pump On");
-                    let cmd = GrainfatherCommand::SetPumpActive(true);
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Pump On");
+                    // let cmd = GrainfatherCommand::SetPumpActive(true);
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Pump Off");
-                    let cmd = GrainfatherCommand::SetPumpActive(false);
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Pump Off");
+                    // let cmd = GrainfatherCommand::SetPumpActive(false);
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Delayed Heat");
-                    let cmd = GrainfatherCommand::EnableDelayedHeatTimer { minutes: 2, seconds: 0 };
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Delayed Heat");
+                    // let cmd = GrainfatherCommand::EnableDelayedHeatTimer { minutes: 2, seconds: 0 };
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5_000));
+                    // std::thread::sleep(Duration::from_millis(5_000));
 
-                    println!("Pause Timer");
-                    let cmd = GrainfatherCommand::PauseOrResumeActiveTimer;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Pause Timer");
+                    // let cmd = GrainfatherCommand::PauseOrResumeActiveTimer;
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5_000));
+                    // std::thread::sleep(Duration::from_millis(5_000));
 
-                    println!("Resume Timer");
-                    let cmd = GrainfatherCommand::PauseOrResumeActiveTimer;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Resume Timer");
+                    // let cmd = GrainfatherCommand::PauseOrResumeActiveTimer;
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5_000));
+                    // std::thread::sleep(Duration::from_millis(5_000));
 
-                    println!("Update Timer");
-                    let cmd = GrainfatherCommand::UpdateActiveTimer(Delay::MinutesSeconds(3, 30));
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Update Timer");
+                    // let cmd = GrainfatherCommand::UpdateActiveTimer(Delay::MinutesSeconds(3, 30));
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5_000));
+                    // std::thread::sleep(Duration::from_millis(5_000));
 
-                    println!("Cancel Delayed Heat");
-                    let cmd = GrainfatherCommand::CancelActiveTimer;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // println!("Cancel Delayed Heat");
+                    // let cmd = GrainfatherCommand::CancelActiveTimer;
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Increment Temp");
-                    let cmd = GrainfatherCommand::IncrementTargetTemperature;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // println!("Increment Temp");
+                    // let cmd = GrainfatherCommand::IncrementTargetTemperature;
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Decrement Temp");
-                    let cmd = GrainfatherCommand::DecrementTargetTemperature;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // println!("Decrement Temp");
+                    // let cmd = GrainfatherCommand::DecrementTargetTemperature;
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Set to 75");
-                    let cmd = GrainfatherCommand::SetTargetTemperature(75.0);
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // println!("Set to 75");
+                    // let cmd = GrainfatherCommand::SetTargetTemperature(75.0);
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Set to 60");
-                    let cmd = GrainfatherCommand::SetTargetTemperature(60.0);
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
-                    std::thread::sleep(Duration::from_millis(5000));
+                    // println!("Set to 60");
+                    // let cmd = GrainfatherCommand::SetTargetTemperature(60.0);
+                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    // std::thread::sleep(Duration::from_millis(5000));
 
                     println!("Send recipe");
                     let mut recipe = Recipe::default();
                     recipe.name = "TEST".to_string();
-                    recipe.delay = RecipeDelay::MinutesSeconds(60, 0);
+                    recipe.delay = RecipeDelay::None; // RecipeDelay::MinutesSeconds(60, 0);
                     recipe.mash_steps.push(MashStep { temperature: 65, minutes: 60 });
                     recipe.mash_steps.push(MashStep { temperature: 75, minutes: 10 });
                     recipe.boil_steps.push(60); // Hop addition 1
