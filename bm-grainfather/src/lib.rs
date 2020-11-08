@@ -5,6 +5,20 @@ pub const SERVICE_ID: u128 = 0x0000cdd000001000800000805f9b34fb;
 pub const CHARACTERISTIC_ID_READ: u128 = 0x0003cdd100001000800000805f9b0131;
 pub const CHARACTERISTIC_ID_WRITE: u128 = 0x0003cdd200001000800000805f9b0131;
 
+pub type InteractionCode = u8;
+
+#[derive(Debug)]
+pub enum Voltage {
+    V110,
+    V230,
+}
+
+#[derive(Debug)]
+pub enum Units {
+    Fahrenheit,
+    Celsius,
+}
+
 #[derive(Debug)]
 pub enum GrainfatherNotification {
     Temp {
@@ -24,7 +38,7 @@ pub enum GrainfatherNotification {
         auto_mode_active: bool,
         stage_ramp_active: bool,
         interaction_mode_active: bool,
-        interaction_code: u8,
+        interaction_code: InteractionCode,
         stage_number: u8,
         delayed_heat_mode_active: bool,
     },
@@ -35,6 +49,19 @@ pub enum GrainfatherNotification {
         recipe_interrupted: bool,
         manual_power_mode: bool,
         sparge_water_alert_displayed: bool,
+    },
+    Interaction {
+        interaction_code: InteractionCode,
+    },
+    Boil {
+        boil_temperature: f64,
+    },
+    VoltageAndUnits {
+        voltage: Voltage,
+        units: Units,
+    },
+    FirmwareVersion {
+        firmware_version: String,
     },
     Other(char, String),
 }
@@ -111,6 +138,45 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
                     recipe_interrupted,
                     manual_power_mode,
                     sparge_water_alert_displayed,
+                })
+            }
+
+            'I' => {
+                let interaction_code = ndata_fields.next().unwrap().parse().unwrap();
+                Ok(Self::Interaction {
+                    interaction_code,
+                })
+            }
+
+            'C' => {
+                let boil_temperature = ndata_fields.next().unwrap().parse().unwrap();
+                Ok(Self::Boil {
+                    boil_temperature,
+                })
+            }
+
+            'F' => {
+                let firmware_version = ndata_fields.next().unwrap().to_string();
+                Ok(Self::FirmwareVersion {
+                    firmware_version,
+                })
+            }
+
+            'V' => {
+                let voltage_is_110 = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
+                let units_are_fahrenheit = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
+
+                Ok(Self::VoltageAndUnits {
+                    voltage: if voltage_is_110 {
+                        Voltage::V110
+                    } else {
+                        Voltage::V230
+                    },
+                    units: if units_are_fahrenheit {
+                        Units::Fahrenheit
+                    } else {
+                        Units::Celsius
+                    },
                 })
             }
 
