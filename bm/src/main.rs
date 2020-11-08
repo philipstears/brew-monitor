@@ -102,11 +102,17 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     println!("Obtaining characteristics");
                     // discover characteristics
                     gf.discover_characteristics().unwrap();
-
                     let cs = gf.characteristics();
-
                     let rcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_READ.to_le_bytes());
                     let rc = cs.iter().find(|c| c.uuid == rcid).unwrap();
+                    let wcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
+                    let wc = cs.iter().find(|c| c.uuid == wcid).unwrap();
+
+                    println!("Reset");
+                    let cmd = GrainfatherCommand::Reset;
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(5000));
 
                     gf.on_notification(Box::new(|value_notification| {
                         let notification = GrainfatherNotification::try_from(value_notification.value.as_ref()).unwrap();
@@ -115,10 +121,8 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
                     gf.subscribe(rc).unwrap();
 
-                    let wcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
-                    let wc = cs.iter().find(|c| c.uuid == wcid).unwrap();
-
                     println!("Requesting Firmware Version");
+
                     let cmd = GrainfatherCommand::GetFirmwareVersion;
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
@@ -143,7 +147,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     std::thread::sleep(Duration::from_millis(5000));
 
                     println!("Delayed Heat");
-                    let cmd = GrainfatherCommand::SetDelayedHeatFunction { minutes: 0, seconds: 5 };
+                    let cmd = GrainfatherCommand::SetDelayedHeatFunction { minutes: 2, seconds: 0 };
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
                     std::thread::sleep(Duration::from_millis(15_000));

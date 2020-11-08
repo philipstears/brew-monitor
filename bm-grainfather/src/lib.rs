@@ -25,11 +25,13 @@ pub enum GrainfatherNotification {
         desired: f64,
         current: f64,
     },
-    // TODO: what is total start time?
-    Timer {
+    DelayedHeatTimer {
         active: bool,
+        // If zero, the time is inactive, otherwise, it's always the number of remaining minutes +
+        // 1, ergo, if it reads 2, there's 1 minute remaining, and possibly some seconds too.
         remaining_minutes: u32,
         remaining_seconds: u32,
+        // The total number of minutes remaining + 1
         total_start_time: u32,
     },
     Status1 {
@@ -95,7 +97,7 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
                 let remaining_minutes = ndata_fields.next().unwrap().parse().unwrap();
                 let total_start_time = ndata_fields.next().unwrap().parse().unwrap();
                 let remaining_seconds = ndata_fields.next().unwrap().parse().unwrap();
-                Ok(Self::Timer {
+                Ok(Self::DelayedHeatTimer {
                     active,
                     remaining_minutes,
                     remaining_seconds,
@@ -186,6 +188,7 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
 }
 
 pub enum GrainfatherCommand {
+    Reset,
     GetFirmwareVersion,
     GetVoltageAndUnits,
 
@@ -195,6 +198,8 @@ pub enum GrainfatherCommand {
     TogglePumpActive,
     SetPumpActive(bool),
 
+    // NOTE: minutes is odd, {2, 0} will only run for 1 minute, and {2, 30} will run for 1 minute
+    // 30 seconds, {1, 30} and {0, 30} will both run for 30 seconds
     SetDelayedHeatFunction {
         minutes: u32,
         seconds: u8,
@@ -206,6 +211,10 @@ impl GrainfatherCommand {
         let mut output = String::with_capacity(19);
 
         match self {
+            Self::Reset => {
+                output.push('Z');
+            }
+
             Self::GetFirmwareVersion => {
                 output.push('X');
             }
