@@ -214,6 +214,21 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
                     std::thread::sleep(Duration::from_millis(5000));
 
+                    println!("Send recipe");
+                    let mut recipe = Recipe::default();
+                    recipe.name = "TEST".to_string();
+                    recipe.delay = RecipeDelay::MinutesSeconds(60, 0);
+                    recipe.mash_steps.push(MashStep { temperature: 65, minutes: 60 });
+                    recipe.mash_steps.push(MashStep { temperature: 75, minutes: 10 });
+                    recipe.boil_steps.push(60); // Hop addition 1
+                    recipe.boil_steps.push(30); // Hop addition 2
+                    recipe.boil_steps.push(5);  // Yeast nutrient
+
+                    for command in recipe.to_commands().iter() {
+                        gf.command(&wc, command.as_ref()).unwrap();
+                    }
+                    println!("Recipe sent");
+
                     loop {
                         std::thread::sleep(Duration::from_millis(1000));
                     }

@@ -202,8 +202,8 @@ pub enum RecipeDelay {
 }
 
 pub struct MashStep {
-    temperature: u8,
-    minutes: u8,
+    pub temperature: u8,
+    pub minutes: u8,
 }
 
 pub struct Recipe {
@@ -221,7 +221,7 @@ pub struct Recipe {
     /// Controls whether the controller will prompt to heat the sparge water.
     pub show_sparge_alert: bool,
 
-    pub delayed_session: RecipeDelay,
+    pub delay: RecipeDelay,
 
     pub skip_start: bool,
 
@@ -284,7 +284,7 @@ impl Recipe {
                 } else {
                     '0'
                 },
-                if let RecipeDelay::MinutesSeconds(_, _) = self.delayed_session {
+                if let RecipeDelay::MinutesSeconds(_, _) = self.delay {
                     '1'
                 } else {
                     '0'
@@ -358,7 +358,7 @@ impl Recipe {
             })
         }
 
-        if let RecipeDelay::MinutesSeconds(minutes, seconds) = self.delayed_session {
+        if let RecipeDelay::MinutesSeconds(minutes, seconds) = self.delay {
             commands.push({
                 let mut command = String::with_capacity(COMMAND_LEN);
                 write!(command, "{},{},", minutes, seconds).unwrap();
@@ -379,7 +379,7 @@ impl Default for Recipe {
             show_water_treatment_alert: false,
             show_sparge_counter: true,
             show_sparge_alert: true,
-            delayed_session: RecipeDelay::None,
+            delay: RecipeDelay::None,
             skip_start: false,
             name: String::default(),
             hop_stand_time: 0,
