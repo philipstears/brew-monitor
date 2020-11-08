@@ -7,6 +7,11 @@ pub const CHARACTERISTIC_ID_WRITE: u128 = 0x0003cdd200001000800000805f9b0131;
 
 pub type InteractionCode = u8;
 
+// TODO: what is the value here?
+pub type SpargeProgress = u8;
+
+pub type StepNumber = u8;
+
 #[derive(Debug)]
 pub enum Voltage {
     V110,
@@ -38,10 +43,10 @@ pub enum GrainfatherNotification {
         heat_active: bool,
         pump_active: bool,
         auto_mode_active: bool,
-        stage_ramp_active: bool,
+        step_ramp_active: bool,
         interaction_mode_active: bool,
         interaction_code: InteractionCode,
-        stage_number: u8,
+        step_number: u8,
         delayed_heat_mode_active: bool,
     },
     Status2 {
@@ -109,19 +114,19 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
                 let heat_active = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
                 let pump_active = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
                 let auto_mode_active = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
-                let stage_ramp_active = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
+                let step_ramp_active = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
                 let interaction_mode_active = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
                 let interaction_code = ndata_fields.next().unwrap().parse().unwrap();
-                let stage_number = ndata_fields.next().unwrap().parse().unwrap();
+                let step_number = ndata_fields.next().unwrap().parse().unwrap();
                 let delayed_heat_mode_active = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
                 Ok(Self::Status1 {
                     heat_active,
                     pump_active,
                     auto_mode_active,
-                    stage_ramp_active,
+                    step_ramp_active,
                     interaction_mode_active,
                     interaction_code,
-                    stage_number,
+                    step_number,
                     delayed_heat_mode_active,
                 })
             }
@@ -192,7 +197,7 @@ pub enum Delay {
     MinutesSeconds(u32, u8),
 }
 
-// ??
+// TODO: what do these mean??
 pub enum DisconnectOption {
     ManualMode,
     CancelSession,
@@ -233,8 +238,29 @@ pub enum GrainfatherCommand {
     PressSet,
     DisableSpargeWaterAlert,
     ResetRecipeInterrupted,
-    InteractionComplete,
     Disconnect(DisconnectOption),
+
+    // TODO: what is the value here?
+    SetSpargeProgress(SpargeProgress),
+
+    UpdateStep {
+        step_number: StepNumber,
+        temperature: f64,
+
+        // TODO: is this actually minutes?
+        time_minutes: u8,
+    },
+    SkipToStep {
+        step_number: StepNumber,
+        can_edit_minutes: u8,
+        time_left_minutes: u8,
+        time_left_seconds: u8,
+        skip_ramp: bool,
+        disable_add_grain: bool,
+    },
+
+    InteractionComplete,
+    SkipToInteraction(InteractionCode),
 
     SetSpargeCounterActive(bool),
     SetBoilControlActive(bool),
@@ -361,8 +387,61 @@ impl GrainfatherCommand {
                 output.push('!');
             }
 
+            Self::SetSpargeProgress(progress) => {
+                output.push_str("b$");
+                output.push_str(progress.to_string().as_ref());
+            }
+
+            Self::UpdateStep {
+                step_number,
+                temperature,
+                time_minutes,
+            } => {
+                output.push('a');
+                output.push_str(step_number.to_string().as_ref());
+                output.push(',');
+                output.push_str(temperature.to_string().as_ref());
+                output.push(',');
+                output.push_str(time_minutes.to_string().as_ref());
+            }
+
+            Self::SkipToStep {
+                step_number,
+                can_edit_minutes,
+                time_left_minutes,
+                time_left_seconds,
+                skip_ramp,
+                disable_add_grain,
+            } => {
+                output.push('N');
+                output.push_str(step_number.to_string().as_ref());
+                output.push(',');
+                output.push_str(can_edit_minutes.to_string().as_ref());
+                output.push(',');
+                output.push_str(time_left_minutes.to_string().as_ref());
+                output.push(',');
+                output.push_str(time_left_seconds.to_string().as_ref());
+                output.push(',');
+                output.push(if *skip_ramp {
+                    '1'
+                } else {
+                    '0'
+                });
+                output.push(',');
+                output.push(if *disable_add_grain {
+                    '1'
+                } else {
+                    '0'
+                });
+            }
+
             Self::InteractionComplete => {
                 output.push('I');
+            }
+
+            Self::SkipToInteraction(code) => {
+                output.push('c');
+                output.push_str(code.to_string().as_ref());
             }
 
             Self::Disconnect(option) => {
