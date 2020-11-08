@@ -186,6 +186,7 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
 }
 
 pub enum GrainfatherCommand {
+    GetFirmwareVersion,
     ToggleHeat,
 }
 
@@ -194,6 +195,10 @@ impl GrainfatherCommand {
         let mut output = Vec::with_capacity(19);
 
         match self {
+            Self::GetFirmwareVersion => {
+                output.push(b'X');
+            }
+
             Self::ToggleHeat => {
                 output.push(b'H');
             }

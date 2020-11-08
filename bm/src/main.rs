@@ -118,10 +118,10 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     let wcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
                     let wc = cs.iter().find(|c| c.uuid == wcid).unwrap();
 
-                    // let cmd = GrainfatherCommand::ToggleHeat;
+                    let cmd = GrainfatherCommand::GetFirmwareVersion;
 
-                    // println!("Sending command!");
-                    // gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    println!("Sending command!");
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
                     loop {
                         std::thread::sleep(Duration::from_millis(1000));
