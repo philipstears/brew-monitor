@@ -110,7 +110,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
                     gf.on_notification(Box::new(|value_notification| {
                         let notification = GrainfatherNotification::try_from(value_notification.value.as_ref()).unwrap();
-                        println!("Notification: {:?}", notification);
+                        println!("\treceived {:?}", notification);
                     }));
 
                     gf.subscribe(rc).unwrap();
@@ -128,7 +128,19 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     let cmd = GrainfatherCommand::GetVoltageAndUnits;
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
 
-                    std::thread::sleep(Duration::from_millis(100));
+                    std::thread::sleep(Duration::from_millis(5000));
+
+                    println!("Pump On");
+                    let cmd = GrainfatherCommand::SetPumpActive(true);
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(5000));
+
+                    println!("Pump Off");
+                    let cmd = GrainfatherCommand::SetPumpActive(false);
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(5000));
 
                     loop {
                         std::thread::sleep(Duration::from_millis(1000));

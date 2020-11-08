@@ -188,7 +188,12 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
 pub enum GrainfatherCommand {
     GetFirmwareVersion,
     GetVoltageAndUnits,
-    ToggleHeat,
+
+    ToggleHeatActive,
+    SetHeatActive(bool),
+
+    TogglePumpActive,
+    SetPumpActive(bool),
 }
 
 impl GrainfatherCommand {
@@ -204,8 +209,32 @@ impl GrainfatherCommand {
                 output.push(b'g');
             }
 
-            Self::ToggleHeat => {
+            Self::ToggleHeatActive => {
                 output.push(b'H');
+            }
+
+            Self::SetHeatActive(active) => {
+                output.push(b'K');
+
+                if *active {
+                    output.push(b'1');
+                } else {
+                    output.push(b'0');
+                }
+            }
+
+            Self::TogglePumpActive => {
+                output.push(b'P');
+            }
+
+            Self::SetPumpActive(active) => {
+                output.push(b'L');
+
+                if *active {
+                    output.push(b'1');
+                } else {
+                    output.push(b'0');
+                }
             }
         }
 
