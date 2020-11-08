@@ -134,6 +134,24 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
                     std::thread::sleep(Duration::from_millis(5000));
 
+                    println!("Requesting Boil Temp");
+                    let cmd = GrainfatherCommand::GetBoilTemperature;
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(5000));
+
+                    println!("Set Local Boil temp");
+                    let cmd = GrainfatherCommand::SetLocalBoilTemperature(98.5);
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(5000));
+
+                    println!("Requesting Boil Temp Again");
+                    let cmd = GrainfatherCommand::GetBoilTemperature;
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(5000));
+
                     println!("Pump On");
                     let cmd = GrainfatherCommand::SetPumpActive(true);
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();

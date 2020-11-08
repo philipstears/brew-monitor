@@ -191,6 +191,7 @@ pub enum GrainfatherCommand {
     Reset,
     GetFirmwareVersion,
     GetVoltageAndUnits,
+    GetBoilTemperature,
 
     ToggleHeatActive,
     SetHeatActive(bool),
@@ -217,6 +218,7 @@ pub enum GrainfatherCommand {
     IncrementTargetTemperature,
     DecrementTargetTemperature,
     SetTargetTemperature(f64),
+    SetLocalBoilTemperature(f64),
 
     DismissBoilAdditionAlert,
     CancelOrFinishSession,
@@ -237,6 +239,10 @@ impl GrainfatherCommand {
 
             Self::GetVoltageAndUnits => {
                 output.push('g');
+            }
+
+            Self::GetBoilTemperature => {
+                output.push('M');
             }
 
             Self::ToggleHeatActive => {
@@ -305,6 +311,11 @@ impl GrainfatherCommand {
 
             Self::SetTargetTemperature(temp) => {
                 output.push('$');
+                output.push_str(temp.to_string().as_ref());
+            }
+
+            Self::SetLocalBoilTemperature(temp) => {
+                output.push('E');
                 output.push_str(temp.to_string().as_ref());
             }
 
