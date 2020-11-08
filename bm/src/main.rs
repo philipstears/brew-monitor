@@ -152,6 +152,18 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
                     std::thread::sleep(Duration::from_millis(5_000));
 
+                    println!("Pause Timer");
+                    let cmd = GrainfatherCommand::PauseOrResumeActiveTimer;
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(5_000));
+
+                    println!("Resume Timer");
+                    let cmd = GrainfatherCommand::PauseOrResumeActiveTimer;
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+
+                    std::thread::sleep(Duration::from_millis(5_000));
+
                     println!("Update Timer");
                     let cmd = GrainfatherCommand::UpdateActiveTimer { minutes: 3, seconds: 30 };
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();

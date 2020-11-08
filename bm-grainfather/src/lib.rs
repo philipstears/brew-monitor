@@ -212,9 +212,14 @@ pub enum GrainfatherCommand {
         seconds: u8,
     },
 
+    PauseOrResumeActiveTimer,
+
     IncrementTargetTemperature,
     DecrementTargetTemperature,
     SetTargetTemperature(f64),
+
+    DismissBoilAdditionAlert,
+    CancelOrFinishSession,
 }
 
 impl GrainfatherCommand {
@@ -286,6 +291,10 @@ impl GrainfatherCommand {
                 output.push_str(seconds.to_string().as_ref());
             }
 
+            Self::PauseOrResumeActiveTimer => {
+                output.push('G');
+            }
+
             Self::IncrementTargetTemperature => {
                 output.push('U');
             }
@@ -297,6 +306,14 @@ impl GrainfatherCommand {
             Self::SetTargetTemperature(temp) => {
                 output.push('$');
                 output.push_str(temp.to_string().as_ref());
+            }
+
+            Self::DismissBoilAdditionAlert => {
+                output.push('A');
+            }
+
+            Self::CancelOrFinishSession => {
+                output.push('F');
             }
         }
 
