@@ -187,6 +187,11 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
     }
 }
 
+pub enum Delay {
+    Minutes(u32),
+    MinutesSeconds(u32, u8),
+}
+
 pub enum GrainfatherCommand {
     Reset,
     GetFirmwareVersion,
@@ -208,11 +213,7 @@ pub enum GrainfatherCommand {
 
     CancelActiveTimer,
 
-    UpdateActiveTimer {
-        minutes: u32,
-        seconds: u8,
-    },
-
+    UpdateActiveTimer(Delay),
     PauseOrResumeActiveTimer,
 
     IncrementTargetTemperature,
@@ -222,6 +223,14 @@ pub enum GrainfatherCommand {
 
     DismissBoilAdditionAlert,
     CancelOrFinishSession,
+    PressSet,
+    DisableSpargeWaterAlert,
+    ResetRecipeInterrupted,
+
+    SetSpargeCounterActive(bool),
+    SetBoilControlActive(bool),
+    SetManualPowerControlActive(bool),
+    SetSpargeAlertModeActive(bool),
 }
 
 impl GrainfatherCommand {
@@ -287,15 +296,19 @@ impl GrainfatherCommand {
                 output.push('C');
             }
 
-            Self::UpdateActiveTimer {
-                minutes,
-                seconds,
-            } => {
-                output.push('W');
-                output.push_str(minutes.to_string().as_ref());
-                output.push(',');
-                output.push_str(seconds.to_string().as_ref());
-            }
+            Self::UpdateActiveTimer(delay) => match delay {
+                Delay::MinutesSeconds(minutes, seconds) => {
+                    output.push('W');
+                    output.push_str(minutes.to_string().as_ref());
+                    output.push(',');
+                    output.push_str(seconds.to_string().as_ref());
+                }
+
+                Delay::Minutes(minutes) => {
+                    output.push('S');
+                    output.push_str(minutes.to_string().as_ref());
+                }
+            },
 
             Self::PauseOrResumeActiveTimer => {
                 output.push('G');
@@ -325,6 +338,58 @@ impl GrainfatherCommand {
 
             Self::CancelOrFinishSession => {
                 output.push('F');
+            }
+
+            Self::PressSet => {
+                output.push('T');
+            }
+
+            Self::DisableSpargeWaterAlert => {
+                output.push('V');
+            }
+
+            Self::ResetRecipeInterrupted => {
+                output.push('!');
+            }
+
+            Self::SetSpargeCounterActive(active) => {
+                output.push('d');
+
+                if *active {
+                    output.push('1');
+                } else {
+                    output.push('0');
+                }
+            }
+
+            Self::SetBoilControlActive(active) => {
+                output.push('e');
+
+                if *active {
+                    output.push('1');
+                } else {
+                    output.push('0');
+                }
+            }
+
+            Self::SetManualPowerControlActive(active) => {
+                output.push('f');
+
+                if *active {
+                    output.push('1');
+                } else {
+                    output.push('0');
+                }
+            }
+
+            Self::SetSpargeAlertModeActive(active) => {
+                output.push('h');
+
+                if *active {
+                    output.push('1');
+                } else {
+                    output.push('0');
+                }
             }
         }
 
