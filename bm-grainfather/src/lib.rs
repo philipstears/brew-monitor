@@ -192,6 +192,13 @@ pub enum Delay {
     MinutesSeconds(u32, u8),
 }
 
+// ??
+pub enum DisconnectOption {
+    ManualMode,
+    CancelSession,
+    AutomaticMode,
+}
+
 pub enum GrainfatherCommand {
     Reset,
     GetFirmwareVersion,
@@ -226,6 +233,8 @@ pub enum GrainfatherCommand {
     PressSet,
     DisableSpargeWaterAlert,
     ResetRecipeInterrupted,
+    InteractionComplete,
+    Disconnect(DisconnectOption),
 
     SetSpargeCounterActive(bool),
     SetBoilControlActive(bool),
@@ -350,6 +359,20 @@ impl GrainfatherCommand {
 
             Self::ResetRecipeInterrupted => {
                 output.push('!');
+            }
+
+            Self::InteractionComplete => {
+                output.push('I');
+            }
+
+            Self::Disconnect(option) => {
+                output.push('Q');
+
+                match option {
+                    DisconnectOption::ManualMode => output.push('0'),
+                    DisconnectOption::CancelSession => output.push('1'),
+                    DisconnectOption::AutomaticMode => output.push('2'),
+                }
             }
 
             Self::SetSpargeCounterActive(active) => {
