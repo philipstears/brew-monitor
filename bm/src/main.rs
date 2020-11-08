@@ -164,10 +164,24 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
                     std::thread::sleep(Duration::from_millis(5000));
 
-                    println!("Heat Off");
-                    let cmd = GrainfatherCommand::SetHeatActive(false);
+                    println!("Increment Temp");
+                    let cmd = GrainfatherCommand::IncrementTargetTemperature;
                     gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    std::thread::sleep(Duration::from_millis(5000));
 
+                    println!("Decrement Temp");
+                    let cmd = GrainfatherCommand::DecrementTargetTemperature;
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    std::thread::sleep(Duration::from_millis(5000));
+
+                    println!("Set to 75");
+                    let cmd = GrainfatherCommand::SetTargetTemperature(75.0);
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    std::thread::sleep(Duration::from_millis(5000));
+
+                    println!("Set to 60");
+                    let cmd = GrainfatherCommand::SetTargetTemperature(60.0);
+                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
                     std::thread::sleep(Duration::from_millis(5000));
 
                     loop {

@@ -211,6 +211,10 @@ pub enum GrainfatherCommand {
         minutes: u32,
         seconds: u8,
     },
+
+    IncrementTargetTemperature,
+    DecrementTargetTemperature,
+    SetTargetTemperature(f64),
 }
 
 impl GrainfatherCommand {
@@ -280,6 +284,19 @@ impl GrainfatherCommand {
                 output.push_str(minutes.to_string().as_ref());
                 output.push(',');
                 output.push_str(seconds.to_string().as_ref());
+            }
+
+            Self::IncrementTargetTemperature => {
+                output.push('U');
+            }
+
+            Self::DecrementTargetTemperature => {
+                output.push('D');
+            }
+
+            Self::SetTargetTemperature(temp) => {
+                output.push('$');
+                output.push_str(temp.to_string().as_ref());
             }
         }
 
