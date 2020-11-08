@@ -1,9 +1,13 @@
+// TODO: review temperature units
 use bm_bluetooth::*;
 use std::convert::TryFrom;
+use std::fmt::Write;
 
 pub const SERVICE_ID: u128 = 0x0000cdd000001000800000805f9b34fb;
 pub const CHARACTERISTIC_ID_READ: u128 = 0x0003cdd100001000800000805f9b0131;
 pub const CHARACTERISTIC_ID_WRITE: u128 = 0x0003cdd200001000800000805f9b0131;
+
+const COMMAND_LEN: usize = 19;
 
 pub type InteractionCode = u8;
 
@@ -192,6 +196,201 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
     }
 }
 
+pub enum RecipeDelay {
+    None,
+    MinutesSeconds(u16, u8),
+}
+
+pub struct MashStep {
+    temperature: u8,
+    minutes: u8,
+}
+
+pub struct Recipe {
+    pub boil_time: u8,
+
+    pub mash_volume: f64,
+
+    pub sparge_volume: f64,
+
+    // NOTE: this isn't surfaced in the grainfather app
+    show_water_treatment_alert: bool,
+
+    pub show_sparge_counter: bool,
+
+    /// Controls whether the controller will prompt to heat the sparge water.
+    pub show_sparge_alert: bool,
+
+    pub delayed_session: RecipeDelay,
+
+    pub skip_start: bool,
+
+    /// The name of the recipe shown on the controller, 19 characters maximum.
+    pub name: String,
+
+    pub hop_stand_time: u8,
+
+    /// Controls whether the boil power can be controlled using the arrows on the
+    /// controller during the boil.
+    pub boil_power_mode: bool,
+
+    // NOTE: according to kingpulsar, this may not be implemented
+    strike_temp_mode: bool,
+
+    pub boil_steps: Vec<u8>,
+
+    pub mash_steps: Vec<MashStep>,
+}
+
+impl Recipe {
+    pub fn to_commands(&self) -> Vec<Vec<u8>> {
+        // TODO: this can be computed
+        let mut commands = Vec::with_capacity(10);
+
+        commands.push({
+            let mut command = String::with_capacity(COMMAND_LEN);
+
+            write!(
+                command,
+                "R{},{},{:.2},{:.2},",
+                self.boil_time,
+                self.mash_steps.len(),
+                self.mash_volume,
+                self.sparge_volume
+            )
+            .unwrap();
+
+            finish_command(command)
+        });
+
+        commands.push({
+            let mut command = String::with_capacity(COMMAND_LEN);
+
+            write!(
+                command,
+                "{},{},{},{},{},",
+                if self.show_water_treatment_alert {
+                    '1'
+                } else {
+                    '0'
+                },
+                if self.show_sparge_counter {
+                    '1'
+                } else {
+                    '0'
+                },
+                if self.show_sparge_alert {
+                    '1'
+                } else {
+                    '0'
+                },
+                if let RecipeDelay::MinutesSeconds(_, _) = self.delayed_session {
+                    '1'
+                } else {
+                    '0'
+                },
+                if self.skip_start {
+                    '1'
+                } else {
+                    '0'
+                },
+            )
+            .unwrap();
+
+            finish_command(command)
+        });
+
+        commands.push({
+            let mut command = String::with_capacity(COMMAND_LEN);
+            command.push_str(self.name.as_ref());
+            finish_command(command)
+        });
+
+        commands.push({
+            let mut command = String::with_capacity(COMMAND_LEN);
+
+            write!(
+                command,
+                "{},{},{},{},",
+                self.hop_stand_time,
+                self.boil_steps.len(),
+                if self.boil_power_mode {
+                    '1'
+                } else {
+                    '0'
+                },
+                if self.strike_temp_mode {
+                    '1'
+                } else {
+                    '0'
+                },
+            )
+            .unwrap();
+
+            finish_command(command)
+        });
+
+        for boil_step in self.boil_steps.iter() {
+            commands.push({
+                let mut command = String::with_capacity(COMMAND_LEN);
+                write!(command, "{},", boil_step).unwrap();
+                finish_command(command).into()
+            })
+        }
+
+        if self.strike_temp_mode {
+            commands.push({
+                let mut command = String::with_capacity(COMMAND_LEN);
+                command.push('0');
+                finish_command(command)
+            })
+        }
+
+        for MashStep {
+            temperature,
+            minutes,
+        } in self.mash_steps.iter()
+        {
+            commands.push({
+                let mut command = String::with_capacity(COMMAND_LEN);
+                write!(command, "{},{},", temperature, minutes).unwrap();
+                finish_command(command)
+            })
+        }
+
+        if let RecipeDelay::MinutesSeconds(minutes, seconds) = self.delayed_session {
+            commands.push({
+                let mut command = String::with_capacity(COMMAND_LEN);
+                write!(command, "{},{},", minutes, seconds).unwrap();
+                finish_command(command).into()
+            })
+        }
+
+        commands
+    }
+}
+
+impl Default for Recipe {
+    fn default() -> Self {
+        Self {
+            boil_time: 60,
+            mash_volume: 13.25,
+            sparge_volume: 14.64,
+            show_water_treatment_alert: false,
+            show_sparge_counter: true,
+            show_sparge_alert: true,
+            delayed_session: RecipeDelay::None,
+            skip_start: false,
+            name: String::default(),
+            hop_stand_time: 0,
+            boil_power_mode: false,
+            strike_temp_mode: false,
+            boil_steps: Vec::with_capacity(4),
+            mash_steps: Vec::with_capacity(4),
+        }
+    }
+}
+
 pub enum Delay {
     Minutes(u32),
     MinutesSeconds(u32, u8),
@@ -270,7 +469,7 @@ pub enum GrainfatherCommand {
 
 impl GrainfatherCommand {
     pub fn to_vec(&self) -> Vec<u8> {
-        let mut output = String::with_capacity(19);
+        let mut output = String::with_capacity(COMMAND_LEN);
 
         match self {
             Self::Reset => {
@@ -495,11 +694,7 @@ impl GrainfatherCommand {
             }
         }
 
-        for _ in 0..(19 - output.len()) {
-            output.push(' ');
-        }
-
-        output.into()
+        finish_command(output)
     }
 }
 
@@ -525,6 +720,14 @@ impl TryFrom<EIRData<'_>> for Grainfather {
 
         Err(Self::Error::ServiceIdNotFound)
     }
+}
+
+fn finish_command(mut command_str: String) -> Vec<u8> {
+    for _ in 0..(COMMAND_LEN - command_str.len()) {
+        command_str.push(' ');
+    }
+
+    command_str.into()
 }
 
 #[cfg(test)]
