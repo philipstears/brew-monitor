@@ -210,7 +210,7 @@ impl GrainfatherCommand {
         }
 
         for _ in 0..(19 - output.len()) {
-            output.push(b'0');
+            output.push(b' ');
         }
 
         output
