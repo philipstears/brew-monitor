@@ -164,7 +164,7 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
 
             'V' => {
                 let voltage_is_110 = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
-                let units_are_fahrenheit = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
+                let units_are_celsius = ndata_fields.next().unwrap().parse::<u8>().unwrap() == 1;
 
                 Ok(Self::VoltageAndUnits {
                     voltage: if voltage_is_110 {
@@ -172,10 +172,10 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
                     } else {
                         Voltage::V230
                     },
-                    units: if units_are_fahrenheit {
-                        Units::Fahrenheit
-                    } else {
+                    units: if units_are_celsius {
                         Units::Celsius
+                    } else {
+                        Units::Fahrenheit
                     },
                 })
             }
@@ -187,6 +187,7 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
 
 pub enum GrainfatherCommand {
     GetFirmwareVersion,
+    GetVoltageAndUnits,
     ToggleHeat,
 }
 
@@ -197,6 +198,10 @@ impl GrainfatherCommand {
         match self {
             Self::GetFirmwareVersion => {
                 output.push(b'X');
+            }
+
+            Self::GetVoltageAndUnits => {
+                output.push(b'g');
             }
 
             Self::ToggleHeat => {
