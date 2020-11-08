@@ -194,6 +194,11 @@ pub enum GrainfatherCommand {
 
     TogglePumpActive,
     SetPumpActive(bool),
+
+    SetDelayedHeatFunction {
+        minutes: u32,
+        seconds: u8,
+    },
 }
 
 impl GrainfatherCommand {
@@ -235,6 +240,16 @@ impl GrainfatherCommand {
                 } else {
                     output.push('0');
                 }
+            }
+
+            Self::SetDelayedHeatFunction {
+                minutes,
+                seconds,
+            } => {
+                output.push('B');
+                output.push_str(minutes.to_string().as_ref());
+                output.push(',');
+                output.push_str(seconds.to_string().as_ref());
             }
         }
 
