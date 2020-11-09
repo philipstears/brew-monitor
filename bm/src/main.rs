@@ -114,10 +114,23 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
                     std::thread::sleep(Duration::from_millis(5000));
 
-                    gf.on_notification(Box::new(|value_notification| {
-                        let notification = GrainfatherNotification::try_from(value_notification.value.as_ref()).unwrap();
-                        println!("\treceived {:?}", notification);
-                    }));
+                    {
+                        const NOTIFICATION_LEN: usize = 17;
+                        const NOTIFICATION_BUF_COUNT: usize = NOTIFICATION_LEN * 8;
+                        let mut gf_notification_buf = Vec::<u8>::with_capacity(NOTIFICATION_BUF_COUNT);
+
+                        gf.on_notification(Box::new(move |mut value_notification| {
+                            gf_notification_buf.append(&mut value_notification.value);
+
+                            let notification_count = gf_notification_buf.len() / NOTIFICATION_LEN;
+                            let notifications_len = notification_count * NOTIFICATION_LEN;
+
+                            for notification in gf_notification_buf.drain(..notifications_len).as_slice().chunks_exact(NOTIFICATION_LEN) {
+                                let notification = GrainfatherNotification::try_from(notification).unwrap();
+                                println!("\treceived {:?}", notification);
+                            }
+                        }));
+                    }
 
                     gf.subscribe(rc).unwrap();
 
