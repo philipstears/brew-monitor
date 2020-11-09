@@ -9,7 +9,12 @@ pub const CHARACTERISTIC_ID_WRITE: u128 = 0x0003cdd200001000800000805f9b0131;
 
 const COMMAND_LEN: usize = 19;
 
-pub type InteractionCode = u8;
+// NOTE: this is sometimes a number,
+// and othertimes not. For example,
+// when the sparge water is added, and the user
+// presses "Set" to confirm its addition, we receive
+// an interaction notification with code "C".
+pub type InteractionCode = String;
 
 // TODO: what is the value here?
 pub type SpargeProgress = u8;
