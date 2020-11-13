@@ -6,6 +6,8 @@ members = [
   "bm-bluetooth",
   "bm-tilt",
   "bm-grainfather",
+
+  "play-warp",
 ]
 
 [patch.crates-io]
