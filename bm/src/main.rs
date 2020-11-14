@@ -1,3 +1,6 @@
+mod grainfather_client;
+pub use grainfather_client::*;
+
 use std::error::Error;
 use std::time::Duration;
 use std::convert::TryFrom;
@@ -90,61 +93,31 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                 else if let Ok(gf_info) = Grainfather::try_from(report2) {
                     println!("at={:?} grainfather={:?} address={} ({:?})", now, gf_info, address, address_type);
 
-                    let gf = btle_central
+                    let gf_peripheral = btle_central
                         .peripherals()
                         .into_iter()
                         .find(|p| p.address().address == address.as_ref())
                         .unwrap();
 
                     println!("Connecting");
-                    gf.connect().unwrap();
-
-                    println!("Obtaining characteristics");
-                    // discover characteristics
-                    gf.discover_characteristics().unwrap();
-                    let cs = gf.characteristics();
-                    let rcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_READ.to_le_bytes());
-                    let rc = cs.iter().find(|c| c.uuid == rcid).unwrap();
-                    let wcid = btleplug::api::UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
-                    let wc = cs.iter().find(|c| c.uuid == wcid).unwrap();
+                    let gf = GrainfatherClient::try_from(gf_peripheral).unwrap();
 
                     println!("Reset");
-                    let cmd = GrainfatherCommand::Reset;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
+                    gf.command(&GrainfatherCommand::Reset).unwrap();
 
                     std::thread::sleep(Duration::from_millis(5000));
 
-                    {
-                        const NOTIFICATION_LEN: usize = 17;
-                        const NOTIFICATION_BUF_COUNT: usize = NOTIFICATION_LEN * 8;
-                        let mut gf_notification_buf = Vec::<u8>::with_capacity(NOTIFICATION_BUF_COUNT);
-
-                        gf.on_notification(Box::new(move |mut value_notification| {
-                            gf_notification_buf.append(&mut value_notification.value);
-
-                            let notification_count = gf_notification_buf.len() / NOTIFICATION_LEN;
-                            let notifications_len = notification_count * NOTIFICATION_LEN;
-
-                            for notification in gf_notification_buf.drain(..notifications_len).as_slice().chunks_exact(NOTIFICATION_LEN) {
-                                let notification = GrainfatherNotification::try_from(notification).unwrap();
-                                println!("\treceived {:?}", notification);
-                            }
-                        }));
-                    }
-
-                    gf.subscribe(rc).unwrap();
+                    gf.subscribe(Box::new(move |mut notification| {
+                        println!("\treceived {:?}", notification);
+                    }));
 
                     println!("Requesting Firmware Version");
 
-                    let cmd = GrainfatherCommand::GetFirmwareVersion;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
-
+                    gf.command(&GrainfatherCommand::GetFirmwareVersion).unwrap();
                     std::thread::sleep(Duration::from_millis(100));
 
                     println!("Requesting Voltage and Units");
-                    let cmd = GrainfatherCommand::GetVoltageAndUnits;
-                    gf.command(&wc, cmd.to_vec().as_ref()).unwrap();
-
+                    gf.command(&GrainfatherCommand::GetVoltageAndUnits).unwrap();
                     std::thread::sleep(Duration::from_millis(5000));
 
                     // println!("Requesting Boil Temp");
@@ -237,9 +210,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     recipe.boil_steps.push(30); // Hop addition 2
                     recipe.boil_steps.push(5);  // Yeast nutrient
 
-                    for command in recipe.to_commands().iter() {
-                        gf.command(&wc, command.as_ref()).unwrap();
-                    }
+                    gf.send_recipe(&recipe);
                     println!("Recipe sent");
 
                     loop {
