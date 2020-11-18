@@ -15,7 +15,7 @@ pub enum GrainfatherClientError {
     ReadCharacteristic,
 }
 
-pub trait GrainfatherClientImpl {
+pub trait GrainfatherClientImpl: Send {
     fn is_connected(&self) -> bool;
     fn connect(&self) -> btleplug::Result<()>;
     fn command(&self, characteristic: &Characteristic, data: &[u8]) -> btleplug::Result<()>;
