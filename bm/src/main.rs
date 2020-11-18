@@ -1,10 +1,13 @@
+mod bluetooth_discovery;
+pub use bluetooth_discovery::*;
+
 mod grainfather_client;
 pub use grainfather_client::*;
 
-use std::error::Error;
-use std::time::Duration;
 use std::convert::TryFrom;
 use std::convert::TryInto;
+use std::error::Error;
+use std::time::Duration;
 
 use async_std::task::block_on;
 
@@ -16,8 +19,8 @@ use btleplug::api::{Central, Peripheral, UUID};
 use btleplug::bluez::{adapter::ConnectedAdapter, manager::Manager};
 
 use bm_bluetooth::*;
-use bm_tilt::*;
 use bm_grainfather::*;
+use bm_tilt::*;
 
 use chrono::prelude::*;
 
@@ -42,7 +45,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                 None
             }
         })
-    .nth(0)
+        .nth(0)
         .expect("no usable controllers found");
 
     if !bluez_info.current_settings.contains(ControllerSetting::Powered) {
@@ -52,7 +55,8 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
     let btle_manager = Manager::new().unwrap();
     let btle_adapters = btle_manager.adapters().unwrap();
-    let btle_adapter = btle_adapters.into_iter().filter(|adapter| adapter.addr.address == bluez_info.address.as_ref()).nth(0).unwrap();
+    let btle_adapter =
+        btle_adapters.into_iter().filter(|adapter| adapter.addr.address == bluez_info.address.as_ref()).nth(0).unwrap();
     let btle_central = btle_adapter.connect().unwrap();
 
     // NOTE: could filter here to just GF if needed
@@ -61,11 +65,10 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
     bluez_client
         .start_service_discovery(
             bluez_controller,
-            AddressTypeFlag::LEPublic |
-            AddressTypeFlag::LERandom,
+            AddressTypeFlag::LEPublic | AddressTypeFlag::LERandom,
             127,
             service_ids.clone(),
-            )
+        )
         .await?;
 
     // just wait for discovery forever
@@ -86,11 +89,16 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                 let report2 = EIRData::from(eir_data.as_ref());
                 let now = Utc::now();
 
-                if let Ok(Tilt { color, fahrenheit, gravity, .. } ) = Tilt::try_from(report1) {
+                if let Ok(Tilt {
+                    color,
+                    fahrenheit,
+                    gravity,
+                    ..
+                }) = Tilt::try_from(report1)
+                {
                     let centi_celsius = ((i32::from(fahrenheit) - 32) * 500) / 9;
                     println!("at={:?} which={:?} celsius={:?} gravity={:?}", now, color, centi_celsius, gravity);
-                }
-                else if let Ok(gf_info) = Grainfather::try_from(report2) {
+                } else if let Ok(gf_info) = Grainfather::try_from(report2) {
                     println!("at={:?} grainfather={:?} address={} ({:?})", now, gf_info, address, address_type);
 
                     let gf_peripheral = btle_central
@@ -204,11 +212,17 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     let mut recipe = Recipe::default();
                     recipe.name = "TEST".to_string();
                     recipe.delay = RecipeDelay::None; // RecipeDelay::MinutesSeconds(60, 0);
-                    recipe.mash_steps.push(MashStep { temperature: 65, minutes: 60 });
-                    recipe.mash_steps.push(MashStep { temperature: 75, minutes: 10 });
+                    recipe.mash_steps.push(MashStep {
+                        temperature: 65,
+                        minutes: 60,
+                    });
+                    recipe.mash_steps.push(MashStep {
+                        temperature: 75,
+                        minutes: 10,
+                    });
                     recipe.boil_steps.push(60); // Hop addition 1
                     recipe.boil_steps.push(30); // Hop addition 2
-                    recipe.boil_steps.push(5);  // Yeast nutrient
+                    recipe.boil_steps.push(5); // Yeast nutrient
 
                     gf.send_recipe(&recipe).unwrap();
                     println!("Recipe sent");
@@ -235,11 +249,10 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     bluez_client
                         .start_service_discovery(
                             bluez_controller,
-                            AddressTypeFlag::LEPublic
-                            | AddressTypeFlag::LERandom,
+                            AddressTypeFlag::LEPublic | AddressTypeFlag::LERandom,
                             127,
                             service_ids.clone(),
-                            )
+                        )
                         .await?;
                 }
             }
@@ -252,14 +265,13 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                 eprintln!(
                     "[{:?}] device connected {} ({:?}) with flags {:?}",
                     bluez_controller, address, address_type, flags
-                    );
+                );
                 let eir_entries = EIRData::from(eir_data.as_ref()).into_iter().collect::<Vec<_>>();
                 eprintln!("Entries: {:?}", eir_entries);
-
             }
             other => {
                 eprintln!("got: {:?}", other);
-            },
+            }
         }
 
         std::thread::sleep(Duration::from_millis(50));
