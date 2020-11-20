@@ -1,8 +1,6 @@
-use bm_bluetooth::*;
 use bm_grainfather::*;
 
-use btleplug::api::{Central, Characteristic, Peripheral, UUID};
-use btleplug::bluez::{adapter::ConnectedAdapter, manager::Manager};
+use btleplug::api::{Characteristic, Peripheral, UUID};
 use btleplug::Error;
 
 use std::convert::TryFrom;
@@ -17,20 +15,70 @@ pub enum GrainfatherClientError {
     ReadCharacteristic,
 }
 
-pub struct GrainfatherClient<P>
+pub trait GrainfatherClientImpl {
+    fn is_connected(&self) -> bool;
+    fn connect(&self) -> btleplug::Result<()>;
+    fn command(&self, characteristic: &Characteristic, data: &[u8]) -> btleplug::Result<()>;
+    fn discover_characteristics(&self) -> btleplug::Result<Vec<Characteristic>>;
+    fn on_notification(&self, handler: btleplug::api::NotificationHandler);
+    fn subscribe(&self, characteristic: &Characteristic) -> btleplug::Result<()>;
+}
+
+pub struct BtleplugGrainfatherClientImpl<P>
 where
     P: Peripheral,
 {
-    gf: P,
+    p: P,
+}
+
+impl<P> BtleplugGrainfatherClientImpl<P>
+where
+    P: Peripheral,
+{
+    pub fn new(peripheral: P) -> Self {
+        Self {
+            p: peripheral,
+        }
+    }
+}
+
+impl<P> GrainfatherClientImpl for BtleplugGrainfatherClientImpl<P>
+where
+    P: Peripheral,
+{
+    fn is_connected(&self) -> bool {
+        self.p.is_connected()
+    }
+
+    fn connect(&self) -> btleplug::Result<()> {
+        self.p.connect()
+    }
+
+    fn command(&self, characteristic: &Characteristic, data: &[u8]) -> btleplug::Result<()> {
+        self.p.command(characteristic, data)
+    }
+
+    fn discover_characteristics(&self) -> btleplug::Result<Vec<Characteristic>> {
+        self.p.discover_characteristics()
+    }
+
+    fn on_notification(&self, handler: btleplug::api::NotificationHandler) {
+        self.p.on_notification(handler)
+    }
+
+    fn subscribe(&self, characteristic: &Characteristic) -> btleplug::Result<()> {
+        self.p.subscribe(characteristic)
+    }
+}
+
+pub struct GrainfatherClient {
+    gf: Box<dyn GrainfatherClientImpl>,
     read: Characteristic,
     write: Characteristic,
 }
 
-impl<P> GrainfatherClient<P>
-where
-    P: Peripheral,
-{
-    pub fn try_from(gf: P) -> Result<Self, GrainfatherClientError> {
+impl GrainfatherClient {
+    pub fn try_from(gf: Box<dyn GrainfatherClientImpl>) -> Result<Self, GrainfatherClientError> {
         if !gf.is_connected() {
             gf.connect().map_err(GrainfatherClientError::Connect)?
         }
@@ -48,10 +96,6 @@ where
             read: rc.clone(),
             write: wc.clone(),
         })
-    }
-
-    pub fn peripheral(&self) -> &P {
-        &self.gf
     }
 
     pub fn command(&self, command: &GrainfatherCommand) -> Result<(), Error> {

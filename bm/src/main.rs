@@ -77,8 +77,8 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
             Event::DeviceFound {
                 address,
                 address_type,
-                flags,
-                rssi,
+                //flags,
+                //rssi,
                 eir_data,
                 ..
             } => {
@@ -100,16 +100,16 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                         .unwrap();
 
                     println!("Connecting");
-                    let gf = GrainfatherClient::try_from(gf_peripheral).unwrap();
+                    let gf = GrainfatherClient::try_from(Box::new(BtleplugGrainfatherClientImpl::new(gf_peripheral))).unwrap();
 
                     println!("Reset");
                     gf.command(&GrainfatherCommand::Reset).unwrap();
 
                     std::thread::sleep(Duration::from_millis(5000));
 
-                    gf.subscribe(Box::new(move |mut notification| {
+                    gf.subscribe(Box::new(move |notification| {
                         println!("\treceived {:?}", notification);
-                    }));
+                    })).unwrap();
 
                     println!("Requesting Firmware Version");
 
@@ -210,7 +210,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     recipe.boil_steps.push(30); // Hop addition 2
                     recipe.boil_steps.push(5);  // Yeast nutrient
 
-                    gf.send_recipe(&recipe);
+                    gf.send_recipe(&recipe).unwrap();
                     println!("Recipe sent");
 
                     loop {
