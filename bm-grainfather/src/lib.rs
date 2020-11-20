@@ -1,3 +1,6 @@
+mod calc;
+pub use calc::*;
+
 // TODO: review temperature units
 use bm_bluetooth::*;
 use std::convert::TryFrom;
