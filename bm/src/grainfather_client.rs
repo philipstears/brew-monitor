@@ -15,70 +15,14 @@ pub enum GrainfatherClientError {
     ReadCharacteristic,
 }
 
-pub trait GrainfatherClientImpl: Send {
-    fn is_connected(&self) -> bool;
-    fn connect(&self) -> btleplug::Result<()>;
-    fn command(&self, characteristic: &Characteristic, data: &[u8]) -> btleplug::Result<()>;
-    fn discover_characteristics(&self) -> btleplug::Result<Vec<Characteristic>>;
-    fn on_notification(&self, handler: btleplug::api::NotificationHandler);
-    fn subscribe(&self, characteristic: &Characteristic) -> btleplug::Result<()>;
-}
-
-pub struct BtleplugGrainfatherClientImpl<P>
-where
-    P: Peripheral,
-{
-    p: P,
-}
-
-impl<P> BtleplugGrainfatherClientImpl<P>
-where
-    P: Peripheral,
-{
-    pub fn new(peripheral: P) -> Self {
-        Self {
-            p: peripheral,
-        }
-    }
-}
-
-impl<P> GrainfatherClientImpl for BtleplugGrainfatherClientImpl<P>
-where
-    P: Peripheral,
-{
-    fn is_connected(&self) -> bool {
-        self.p.is_connected()
-    }
-
-    fn connect(&self) -> btleplug::Result<()> {
-        self.p.connect()
-    }
-
-    fn command(&self, characteristic: &Characteristic, data: &[u8]) -> btleplug::Result<()> {
-        self.p.command(characteristic, data)
-    }
-
-    fn discover_characteristics(&self) -> btleplug::Result<Vec<Characteristic>> {
-        self.p.discover_characteristics()
-    }
-
-    fn on_notification(&self, handler: btleplug::api::NotificationHandler) {
-        self.p.on_notification(handler)
-    }
-
-    fn subscribe(&self, characteristic: &Characteristic) -> btleplug::Result<()> {
-        self.p.subscribe(characteristic)
-    }
-}
-
 pub struct GrainfatherClient {
-    gf: Box<dyn GrainfatherClientImpl>,
+    gf: Peripheral,
     read: Characteristic,
     write: Characteristic,
 }
 
 impl GrainfatherClient {
-    pub fn try_from(gf: Box<dyn GrainfatherClientImpl>) -> Result<Self, GrainfatherClientError> {
+    pub fn try_from(gf: Peripheral) -> Result<Self, GrainfatherClientError> {
         if !gf.is_connected() {
             gf.connect().map_err(GrainfatherClientError::Connect)?
         }

@@ -1,4 +1,4 @@
-use crate::{GrainfatherClient, BtleplugGrainfatherClientImpl, };
+use crate::{GrainfatherClient};
 
 use std::{
     error::Error,
@@ -16,7 +16,7 @@ use bluez::{
     interface::{controller::*, event::Event},
 };
 use btleplug::{
-    api::{Central, Peripheral},
+    api::{Central},
 };
 
 #[cfg(target_os = "linux")]
@@ -124,8 +124,7 @@ impl<'z> BluetoothDiscovery<'z>
                             .find(|p| p.address().address == address.as_ref())
                             .unwrap();
 
-                        let gf = BtleplugGrainfatherClientImpl::new(gf_peripheral);
-                        let gf = GrainfatherClient::try_from(Box::new(gf)).unwrap();
+                        let gf = GrainfatherClient::try_from(gf_peripheral).unwrap();
 
                         self.sender.send(BluetoothDiscoveryEvent::DiscoveredGrainfather(gf)).unwrap();
                     }

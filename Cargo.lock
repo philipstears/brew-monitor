@@ -297,8 +297,7 @@ dependencies = [
 [[package]]
 name = "btleplug"
 version = "0.5.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f71b5a9045a55cd9b97a2f6186ff8d490e8d8adfbd287fb7a96fd8c189c0b63"
+source = "git+https://github.com/philipstears/btleplug?branch=remove-peripheral-trait#fdc18e2743d952fef429c816f1c9471ede5ab3f7"
 dependencies = [
  "async-std",
  "backtrace",

@@ -12,3 +12,4 @@ members = [
 
 [patch.crates-io]
 dht22_pi = { git = 'https://github.com/philipstears/dht22_pi' }
+btleplug = { git = 'https://github.com/philipstears/btleplug', branch = "remove-peripheral-trait" }
