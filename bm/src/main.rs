@@ -62,12 +62,16 @@ pub async fn main() {
         let tilts = tilts.clone();
 
         let tilt = warp::path!("tilt" / TiltColorParam)
-            .map(move |ref color: TiltColorParam| {
-                if let Some(info) = tilts.read().unwrap().get(color.color()) {
-                    format!("{}", info.device.fahrenheit)
-                }
-                else {
-                    "".into()
+            .and_then(move |color: TiltColorParam| {
+                let tilts = tilts.clone();
+
+                async move {
+                    if let Some(info) = tilts.read().unwrap().get(color.color()) {
+                        Ok(format!("{}", info.device.fahrenheit))
+                    }
+                    else {
+                        Err(warp::reject::not_found())
+                    }
                 }
             })
             .with(warp::reply::with::header("Content-Type", "application/json"));
