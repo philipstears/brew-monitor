@@ -204,16 +204,20 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
     }
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum RecipeDelay {
     None,
     MinutesSeconds(u16, u8),
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct MashStep {
     pub temperature: u8,
     pub minutes: u8,
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Recipe {
     pub boil_time: u8,
 

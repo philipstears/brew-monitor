@@ -73,7 +73,7 @@ pub async fn main() {
         let gf_route = {
             let gf = gf.clone();
 
-            warp::path!("gf")
+            warp::path!("gf" / "command")
                 .and(warp::post())
                 .and(warp::body::json())
                 .and_then(move |command: GrainfatherCommand| {
