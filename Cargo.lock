@@ -267,7 +267,10 @@ dependencies = [
  "bm-tilt",
  "btleplug",
  "chrono",
+ "serde",
+ "tokio",
  "uuid",
+ "warp",
 ]
 
 [[package]]

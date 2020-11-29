@@ -1,5 +1,8 @@
 use bm_bluetooth::*;
-use std::convert::{TryFrom, TryInto};
+use std::{
+    convert::{TryFrom, TryInto},
+    str::FromStr,
+};
 
 const TILT_RED: u128 = 0xA495BB10C5B14B44B5121370F02D74DE;
 const TILT_GREEN: u128 = 0xA495BB20C5B14B44B5121370F02D74DE;
@@ -10,7 +13,7 @@ const TILT_BLUE: u128 = 0xA495BB60C5B14B44B5121370F02D74DE;
 const TILT_YELLOW: u128 = 0xA495BB70C5B14B44B5121370F02D74DE;
 const TILT_PINK: u128 = 0xA495BB80C5B14B44B5121370F02D74DE;
 
-#[derive(Debug)]
+#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone)]
 pub enum TiltColor {
     Red,
     Green,

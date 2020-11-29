@@ -1,24 +1,40 @@
-use crate::*;
-
-use std::sync::mpsc;
-use std::thread;
-use std::time::Duration;
-
 use async_std::task::block_on;
+use chrono::prelude::*;
+use warp::{http, Filter, Rejection, Reply};
+
+use std::{collections::HashMap, sync::mpsc, thread, time::Duration};
 
 use bm_grainfather::*;
 use bm_tilt::*;
 
-use chrono::prelude::*;
+use crate::*;
 
-pub struct Server {}
+pub struct DeviceInfo<T> {
+    when: DateTime<Utc>,
+    device: T,
+}
+
+impl<T> DeviceInfo<T> {
+    pub fn new(when: DateTime<Utc>, device: T) -> Self {
+        Self {
+            when,
+            device,
+        }
+    }
+}
+
+pub struct Server {
+    tilts: HashMap<TiltColor, DeviceInfo<Tilt>>,
+}
 
 impl Server {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            tilts: HashMap::new(),
+        }
     }
 
-    pub fn run(self) {
+    pub fn run(mut self) {
         let (discovery_sender, discovery_receiver) = mpsc::channel();
 
         let _ = thread::Builder::new().name("ble-discovery".into()).spawn(move || {
@@ -28,15 +44,15 @@ impl Server {
 
         loop {
             match discovery_receiver.recv().unwrap() {
-                BluetoothDiscoveryEvent::DiscoveredTilt(Tilt {
-                    color,
-                    fahrenheit,
-                    gravity,
-                    ..
-                }) => {
+                BluetoothDiscoveryEvent::DiscoveredTilt(tilt) => {
                     let now = Utc::now();
-                    let centi_celsius = ((i32::from(fahrenheit) - 32) * 500) / 9;
-                    println!("at={:?} which={:?} celsius={:?} gravity={:?}", now, color, centi_celsius, gravity);
+                    let centi_celsius = ((i32::from(tilt.fahrenheit) - 32) * 500) / 9;
+                    println!(
+                        "at={:?} which={:?} celsius={:?} gravity={:?}",
+                        now, tilt.color, centi_celsius, tilt.gravity
+                    );
+
+                    self.tilts.insert(tilt.color, DeviceInfo::new(now, tilt));
                 }
 
                 BluetoothDiscoveryEvent::DiscoveredGrainfather(gf) => {

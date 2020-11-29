@@ -12,6 +12,10 @@ uuid = "0.8.1"
 chrono = "0.4"
 btleplug = "0.5.4"
 
+warp = "0.2.5"
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "0.2", features = ["full"] }
+
 bm-bluetooth = { path = "../bm-bluetooth" }
 bm-tilt = { path = "../bm-tilt" }
 bm-grainfather = { path = "../bm-grainfather" }
