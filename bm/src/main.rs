@@ -50,6 +50,11 @@ impl std::str::FromStr for TiltColorParam {
     }
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+struct TiltStatus {
+    centi_celsius: i32,
+}
+
 #[tokio::main]
 pub async fn main() {
     let tilts = Arc::new(RwLock::new(HashMap::<TiltColor, DeviceInfo<Tilt>>::new()));
@@ -67,14 +72,15 @@ pub async fn main() {
 
                 async move {
                     if let Some(info) = tilts.read().unwrap().get(color.color()) {
-                        Ok(format!("{}", info.device.fahrenheit))
+                        Ok(warp::reply::json(&TiltStatus {
+                            centi_celsius: ((i32::from(info.device.fahrenheit) - 32) * 500) / 9,
+                        }))
                     }
                     else {
                         Err(warp::reject::not_found())
                     }
                 }
-            })
-            .with(warp::reply::with::header("Content-Type", "application/json"));
+            });
 
         hello.or(tilt)
     };
