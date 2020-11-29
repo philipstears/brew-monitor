@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+curl \
+    -vv \
+    http://localhost:3030/gf/recipe \
+    -H "Content-Type: application/json" \
+    -d @recipe.json
+

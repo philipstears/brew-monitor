@@ -1,0 +1,24 @@
+{
+    "boil_time": 60,
+    "mash_volume": 13.25,
+    "sparge_volume": 14.64,
+    "show_water_treatment_alert": true,
+    "show_sparge_counter": true,
+    "show_sparge_alert": true,
+    "delay": { "type": "None" },
+    "skip_start": false,
+    "name": "STIPA",
+    "hop_stand_time": 0,
+    "boil_power_mode": false,
+    "strike_temp_mode": false,
+    "boil_steps": [
+        60,
+        30,
+        5
+    ],
+    "mash_steps": [
+        { "temperature": 65, "minutes": 60 },
+        { "temperature": 75, "minutes": 10 }
+    ]
+}
+

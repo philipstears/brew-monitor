@@ -71,26 +71,53 @@ pub async fn main() {
             .with(warp::reply::with::header("Content-Type", "application/json"));
 
         let gf_route = {
-            let gf = gf.clone();
+            let command = {
+                let gf = gf.clone();
 
-            warp::path!("gf" / "command")
-                .and(warp::post())
-                .and(warp::body::json())
-                .and_then(move |command: GrainfatherCommand| {
-                    let gf = gf.clone();
+                warp::path!("command")
+                    .and(warp::post())
+                    .and(warp::body::json())
+                    .and_then(move |command: GrainfatherCommand| {
+                        let gf = gf.clone();
 
-                    async move {
-                        let guard = gf.read().unwrap();
+                        async move {
+                            let guard = gf.read().unwrap();
 
-                        if let Some(client) = &*guard {
-                            client.command(&command).unwrap();
-                            Ok(warp::reply::json(&GrainfatherResponse {}))
+                            if let Some(client) = &*guard {
+                                client.command(&command).unwrap();
+                                Ok(warp::reply::json(&GrainfatherResponse {}))
+                            }
+                            else {
+                                Err(warp::reject::not_found())
+                            }
                         }
-                        else {
-                            Err(warp::reject::not_found())
+                    })
+            };
+
+            let recipe = {
+                let gf = gf.clone();
+
+                warp::path!("recipe")
+                    .and(warp::post())
+                    .and(warp::body::json())
+                    .and_then(move |recipe: Recipe| {
+                        let gf = gf.clone();
+
+                        async move {
+                            let guard = gf.read().unwrap();
+
+                            if let Some(client) = &*guard {
+                                client.send_recipe(&recipe).unwrap();
+                                Ok(warp::reply::json(&GrainfatherResponse {}))
+                            }
+                            else {
+                                Err(warp::reject::not_found())
+                            }
                         }
-                    }
-                })
+                    })
+            };
+
+            warp::path("gf").and(command.or(recipe))
         };
 
         let tilt_route = {
