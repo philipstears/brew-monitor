@@ -5,7 +5,7 @@
     "show_water_treatment_alert": true,
     "show_sparge_counter": true,
     "show_sparge_alert": true,
-    "delay": { "type": "None" },
+    "delay": { "type": "MinutesSeconds", "data": [5, 0] },
     "skip_start": false,
     "name": "STIPA",
     "hop_stand_time": 0,
