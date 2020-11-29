@@ -169,6 +169,14 @@ pub async fn main() {
                 }
 
                 BluetoothDiscoveryEvent::DiscoveredGrainfather(gf_client) => {
+                    // gf_client.subscribe(Box::new(|notification| {
+                    //     let now = Utc::now();
+                    //     println!(
+                    //         "at={:?} which=grainfather notification={:?}",
+                    //         now, notification
+                    //         );
+                    // })).unwrap();
+
                     gf.write().unwrap().replace(gf_client);
                 }
             }

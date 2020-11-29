@@ -95,7 +95,7 @@ impl<'z> BluetoothDiscovery<'z>
                     discovering,
                     address_type,
                 } => {
-                    eprintln!("discovering: {} {:?}", discovering, address_type);
+                    // eprintln!("discovering: {} {:?}", discovering, address_type);
 
                     // if discovery ended, turn it back on
                     if !discovering {

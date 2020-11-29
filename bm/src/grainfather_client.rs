@@ -3,7 +3,10 @@ use bm_grainfather::*;
 use btleplug::api::{Characteristic, Peripheral, UUID};
 use btleplug::Error;
 
-use std::convert::TryFrom;
+use std::{
+    convert::TryFrom,
+    sync::{Arc, RwLock},
+};
 
 type NotificationHandler = Box<dyn FnMut(GrainfatherNotification) + Send>;
 
@@ -72,11 +75,18 @@ where
     }
 }
 
+#[derive(Debug, Default)]
+struct GrainfatherState {
+    interaction_code: InteractionCode,
+    step_number: StepNumber,
+}
+
 #[derive(Debug)]
 pub struct GrainfatherClient {
     gf: Box<dyn GrainfatherClientImpl>,
     read: Characteristic,
     write: Characteristic,
+    state: Arc<RwLock<GrainfatherState>>,
 }
 
 impl GrainfatherClient {
@@ -93,14 +103,68 @@ impl GrainfatherClient {
         let wc_id = UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
         let wc = cs.iter().find(|c| c.uuid == wc_id).ok_or(GrainfatherClientError::WriteCharacteristic)?;
 
-        Ok(Self {
+        let state = Arc::new(RwLock::new(GrainfatherState::default()));
+
+        let result = Self {
             gf,
             read: rc.clone(),
             write: wc.clone(),
-        })
+            state: state.clone(),
+        };
+
+        result
+            .subscribe(Box::new(move |notification| match notification {
+                GrainfatherNotification::Status1 {
+                    interaction_code,
+                    step_number,
+                    ..
+                } => {
+                    let mut state = state.write().unwrap();
+
+                    if state.interaction_code != interaction_code {
+                        println!("Interaction code changed from {} to {}", state.interaction_code, interaction_code);
+                        state.interaction_code = interaction_code;
+                    }
+
+                    if state.step_number != step_number {
+                        println!("Step number changed from {} to {}", state.step_number, step_number);
+                        state.step_number = step_number;
+                    }
+                }
+                GrainfatherNotification::Status2 {
+                    ..
+                } => {}
+                GrainfatherNotification::Temp {
+                    ..
+                } => {}
+                GrainfatherNotification::DelayedHeatTimer {
+                    ..
+                } => {}
+                GrainfatherNotification::Interaction {
+                    interaction_code,
+                } => {
+                    println!("Received interaction with code {}", interaction_code);
+                }
+                GrainfatherNotification::VoltageAndUnits {
+                    ..
+                } => {}
+                GrainfatherNotification::Boil {
+                    ..
+                } => {}
+                GrainfatherNotification::FirmwareVersion {
+                    ..
+                } => {}
+                GrainfatherNotification::Other {
+                    ..
+                } => {}
+            }))
+            .unwrap();
+
+        Ok(result)
     }
 
     pub fn command(&self, command: &GrainfatherCommand) -> Result<(), Error> {
+        println!("Sending command {:?}", command);
         self.gf.command(&self.write, command.to_vec().as_ref())
     }
 

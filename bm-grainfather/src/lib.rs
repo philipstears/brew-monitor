@@ -58,7 +58,7 @@ pub enum GrainfatherNotification {
         step_ramp_active: bool,
         interaction_mode_active: bool,
         interaction_code: InteractionCode,
-        step_number: u8,
+        step_number: StepNumber,
         delayed_heat_mode_active: bool,
     },
     Status2 {
@@ -403,7 +403,7 @@ impl Default for Recipe {
     }
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum Delay {
     Minutes(u32),
@@ -411,7 +411,7 @@ pub enum Delay {
 }
 
 // TODO: what do these mean??
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum DisconnectOption {
     ManualMode,
@@ -419,7 +419,7 @@ pub enum DisconnectOption {
     AutomaticMode,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum GrainfatherCommand {
     Reset,
