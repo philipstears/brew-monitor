@@ -3,8 +3,7 @@ pub use calc::*;
 
 // TODO: review temperature units
 use bm_bluetooth::*;
-use std::convert::TryFrom;
-use std::fmt::Write;
+use std::{convert::TryFrom, fmt::Write, str::FromStr};
 
 pub const SERVICE_ID: u128 = 0x0000cdd000001000800000805f9b34fb;
 pub const CHARACTERISTIC_ID_READ: u128 = 0x0003cdd100001000800000805f9b0131;
@@ -17,7 +16,50 @@ const COMMAND_LEN: usize = 19;
 // when the sparge water is added, and the user
 // presses "Set" to confirm its addition, we receive
 // an interaction notification with code "C".
-pub type InteractionCode = String;
+#[derive(Debug, Eq, PartialEq, serde::Deserialize)]
+#[serde(tag = "type", content = "data")]
+pub enum InteractionCode {
+    /// 0
+    None,
+
+    /// 1
+    SkipDelayedRecipe,
+
+    /// 2
+    AddGrain,
+
+    Other(String),
+}
+
+impl Default for InteractionCode {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl FromStr for InteractionCode {
+    type Err = ();
+
+    fn from_str(other: &str) -> Result<Self, Self::Err> {
+        match other {
+            "0" => Ok(Self::None),
+            "1" => Ok(Self::SkipDelayedRecipe),
+            "2" => Ok(Self::AddGrain),
+            _ => Ok(Self::Other(other.into())),
+        }
+    }
+}
+
+impl ToString for InteractionCode {
+    fn to_string(&self) -> String {
+        match self {
+            Self::None => "0".into(),
+            Self::SkipDelayedRecipe => "1".into(),
+            Self::AddGrain => "2".into(),
+            Self::Other(other) => other.into(),
+        }
+    }
+}
 
 // TODO: what is the value here?
 pub type SpargeProgress = u8;

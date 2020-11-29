@@ -4,5 +4,5 @@ curl \
     -vv \
     http://localhost:3030/gf/command \
     -H "Content-Type: application/json" \
-    -d '{"type": "SkipToInteraction", "data": "2"}'
+    -d '{"type": "SkipToInteraction", "data": {"type": "AddGrain"}}'
 

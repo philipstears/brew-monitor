@@ -122,7 +122,10 @@ impl GrainfatherClient {
                     let mut state = state.write().unwrap();
 
                     if state.interaction_code != interaction_code {
-                        println!("Interaction code changed from {} to {}", state.interaction_code, interaction_code);
+                        println!(
+                            "Interaction code changed from {:?} to {:?}",
+                            state.interaction_code, interaction_code
+                        );
                         state.interaction_code = interaction_code;
                     }
 
@@ -143,7 +146,7 @@ impl GrainfatherClient {
                 GrainfatherNotification::Interaction {
                     interaction_code,
                 } => {
-                    println!("Received interaction with code {}", interaction_code);
+                    println!("Received interaction with code {:?}", interaction_code);
                 }
                 GrainfatherNotification::VoltageAndUnits {
                     ..
