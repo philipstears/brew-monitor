@@ -399,18 +399,24 @@ impl Default for Recipe {
     }
 }
 
+#[derive(serde::Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum Delay {
     Minutes(u32),
     MinutesSeconds(u32, u8),
 }
 
 // TODO: what do these mean??
+#[derive(serde::Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum DisconnectOption {
     ManualMode,
     CancelSession,
     AutomaticMode,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum GrainfatherCommand {
     Reset,
     GetFirmwareVersion,

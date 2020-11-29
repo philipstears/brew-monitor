@@ -15,7 +15,7 @@ pub enum GrainfatherClientError {
     ReadCharacteristic,
 }
 
-pub trait GrainfatherClientImpl: Send {
+pub trait GrainfatherClientImpl: Send + Sync + std::fmt::Debug {
     fn is_connected(&self) -> bool;
     fn connect(&self) -> btleplug::Result<()>;
     fn command(&self, characteristic: &Characteristic, data: &[u8]) -> btleplug::Result<()>;
@@ -24,6 +24,7 @@ pub trait GrainfatherClientImpl: Send {
     fn subscribe(&self, characteristic: &Characteristic) -> btleplug::Result<()>;
 }
 
+#[derive(Debug)]
 pub struct BtleplugGrainfatherClientImpl<P>
 where
     P: Peripheral,
@@ -71,6 +72,7 @@ where
     }
 }
 
+#[derive(Debug)]
 pub struct GrainfatherClient {
     gf: Box<dyn GrainfatherClientImpl>,
     read: Characteristic,

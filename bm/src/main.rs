@@ -4,16 +4,12 @@ pub use bluetooth_discovery::*;
 mod grainfather_client;
 pub use grainfather_client::*;
 
-mod server;
-pub use server::*;
-
 use bm_grainfather::*;
 use bm_tilt::*;
 
-use std::{collections::HashMap, sync::{mpsc, Arc, RwLock}, thread, time::Duration};
+use std::{collections::HashMap, sync::{mpsc, Arc, RwLock}};
 
-use warp::{http, Filter, Rejection, Reply};
-use async_std::task::block_on;
+use warp::{Filter};
 use chrono::prelude::*;
 
 struct TiltColorParam(TiltColor);
@@ -55,34 +51,71 @@ struct TiltStatus {
     centi_celsius: i32,
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+struct GrainfatherRequest {
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct GrainfatherResponse {
+}
+
 #[tokio::main]
 pub async fn main() {
     let tilts = Arc::new(RwLock::new(HashMap::<TiltColor, DeviceInfo<Tilt>>::new()));
+
+    let gf: Arc<RwLock<Option<GrainfatherClient>>> = Arc::new(RwLock::new(None));
 
     let routes = {
         let hello = warp::path!("hello" / String)
             .map(|name| format!("Hello, {}!", name))
             .with(warp::reply::with::header("Content-Type", "application/json"));
 
-        let tilts = tilts.clone();
+        let gf_route = {
+            let gf = gf.clone();
 
-        let tilt = warp::path!("tilt" / TiltColorParam)
-            .and_then(move |color: TiltColorParam| {
-                let tilts = tilts.clone();
+            warp::path!("gf")
+                .and(warp::post())
+                .and(warp::body::json())
+                .and_then(move |command: GrainfatherCommand| {
+                    let gf = gf.clone();
 
-                async move {
-                    if let Some(info) = tilts.read().unwrap().get(color.color()) {
-                        Ok(warp::reply::json(&TiltStatus {
-                            centi_celsius: ((i32::from(info.device.fahrenheit) - 32) * 500) / 9,
-                        }))
+                    async move {
+                        let guard = gf.read().unwrap();
+
+                        if let Some(client) = &*guard {
+                            client.command(&command).unwrap();
+                            Ok(warp::reply::json(&GrainfatherResponse {}))
+                        }
+                        else {
+                            Err(warp::reject::not_found())
+                        }
                     }
-                    else {
-                        Err(warp::reject::not_found())
-                    }
-                }
-            });
+                })
+        };
 
-        hello.or(tilt)
+        let tilt_route = {
+            let tilts = tilts.clone();
+
+            warp::path!("tilt" / TiltColorParam)
+                .and_then(move |color: TiltColorParam| {
+                    let tilts = tilts.clone();
+
+                    async move {
+                        if let Some(info) = tilts.read().unwrap().get(color.color()) {
+                            Ok(warp::reply::json(&TiltStatus {
+                                centi_celsius: ((i32::from(info.device.fahrenheit) - 32) * 500) / 9,
+                            }))
+                        }
+                        else {
+                            Err(warp::reject::not_found())
+                        }
+                    }
+                })
+        };
+
+        hello
+            .or(tilt_route)
+            .or(gf_route)
     };
 
     let web = warp::serve(routes).run(([0, 0, 0, 0], 3030));
@@ -108,7 +141,8 @@ pub async fn main() {
                     tilts.write().unwrap().insert(tilt.color, DeviceInfo::new(now, tilt));
                 }
 
-                _ => {
+                BluetoothDiscoveryEvent::DiscoveredGrainfather(gf_client) => {
+                    gf.write().unwrap().replace(gf_client);
                 }
             }
         }
