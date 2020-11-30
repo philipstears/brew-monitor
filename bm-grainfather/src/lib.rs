@@ -266,7 +266,7 @@ pub enum RecipeDelay {
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct MashStep {
     pub temperature: u8,
-    pub seconds: u16,
+    pub minutes: u8,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -423,12 +423,12 @@ impl Recipe {
 
         for MashStep {
             temperature,
-            seconds,
+            minutes,
         } in self.mash_steps.iter()
         {
             commands.push({
                 let mut command = String::with_capacity(COMMAND_LEN);
-                write!(command, "{},{},", temperature, seconds).unwrap();
+                write!(command, "{}:{},", temperature, minutes).unwrap();
                 finish_command(command)
             })
         }
