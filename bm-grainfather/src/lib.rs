@@ -271,27 +271,36 @@ pub struct MashStep {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Recipe {
+    /// The total duration of the boil
     pub boil_time: u8,
 
+    /// The volume of water present for the mash
     pub mash_volume: f64,
 
+    /// The volume of water added during the sparge
     pub sparge_volume: f64,
 
     // NOTE: this isn't surfaced in the grainfather app
+    /// ? - I think this is shown on the sparge water alert
     show_water_treatment_alert: bool,
 
+    /// Controls whether the on-controller sparge counter is shown during the
+    /// sparge.
     pub show_sparge_counter: bool,
 
     /// Controls whether the controller will prompt to heat the sparge water.
     pub show_sparge_alert: bool,
 
+    /// The amount of time to wait before starting to heat the strike water.
     pub delay: RecipeDelay,
 
+    /// ?
     pub skip_start: bool,
 
     /// The name of the recipe shown on the controller, 19 characters maximum.
     pub name: String,
 
+    /// ?
     pub hop_stand_time: u8,
 
     /// Controls whether the boil power can be controlled using the arrows on the
@@ -301,8 +310,10 @@ pub struct Recipe {
     // NOTE: according to kingpulsar, this may not be implemented
     strike_temp_mode: bool,
 
+    /// The times (from the end of the boil) at which additions should be added to the boil
     pub boil_steps: Vec<u8>,
 
+    /// The times and temperatures of each mash step, in order.
     pub mash_steps: Vec<MashStep>,
 }
 
