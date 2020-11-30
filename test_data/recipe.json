@@ -17,8 +17,9 @@
         5
     ],
     "mash_steps": [
-        { "temperature": 65, "minutes": 60 },
-        { "temperature": 75, "minutes": 10 }
+        { "temperature": 30, "seconds": 300 },
+        { "temperature": 40, "seconds": 301 },
+        { "temperature": 50, "seconds": 302 }
     ]
 }
 
