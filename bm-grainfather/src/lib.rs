@@ -16,7 +16,7 @@ const COMMAND_LEN: usize = 19;
 // when the sparge water is added, and the user
 // presses "Set" to confirm its addition, we receive
 // an interaction notification with code "C".
-#[derive(Debug, Eq, PartialEq, serde::Deserialize)]
+#[derive(Debug, Eq, PartialEq, Clone, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum InteractionCode {
     /// 0
@@ -27,6 +27,12 @@ pub enum InteractionCode {
 
     /// 2
     AddGrain,
+
+    /// 3
+    MashOutDoneStartSparge,
+
+    /// 4
+    Sparge,
 
     Other(String),
 }
@@ -45,6 +51,8 @@ impl FromStr for InteractionCode {
             "0" => Ok(Self::None),
             "1" => Ok(Self::SkipDelayedRecipe),
             "2" => Ok(Self::AddGrain),
+            "3" => Ok(Self::MashOutDoneStartSparge),
+            "4" => Ok(Self::Sparge),
             _ => Ok(Self::Other(other.into())),
         }
     }
@@ -56,6 +64,8 @@ impl ToString for InteractionCode {
             Self::None => "0".into(),
             Self::SkipDelayedRecipe => "1".into(),
             Self::AddGrain => "2".into(),
+            Self::MashOutDoneStartSparge => "3".into(),
+            Self::Sparge => "4".into(),
             Self::Other(other) => other.into(),
         }
     }
