@@ -286,6 +286,7 @@ pub struct Recipe {
     /// prompt on the countdown to heating the strike water.
     ///
     /// This isn't available in the grainfather mobile app.
+    #[serde(default)]
     pub show_water_treatment_alert: bool,
 
     /// Controls whether the on-controller sparge counter is shown during the
@@ -299,19 +300,23 @@ pub struct Recipe {
     pub delay: RecipeDelay,
 
     /// ?
+    #[serde(default)]
     pub skip_start: bool,
 
     /// The name of the recipe shown on the controller, 19 characters maximum.
     pub name: String,
 
     /// ?
+    #[serde(default)]
     pub hop_stand_time: u8,
 
     /// Controls whether the boil power can be controlled using the arrows on the
     /// controller during the boil.
+    #[serde(default)]
     pub boil_power_mode: bool,
 
     // NOTE: according to kingpulsar, this may not be implemented
+    #[serde(default)]
     strike_temp_mode: bool,
 
     /// The times (from the end of the boil) at which additions should be added to the boil
