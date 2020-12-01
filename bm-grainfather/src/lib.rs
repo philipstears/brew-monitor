@@ -19,21 +19,12 @@ const COMMAND_LEN: usize = 19;
 #[derive(Debug, Eq, PartialEq, Clone, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum InteractionCode {
-    /// 0
     None,
-
-    /// 1
     SkipDelayedRecipe,
-
-    /// 2
     AddGrain,
-
-    /// 3
     MashOutDoneStartSparge,
-
-    /// 4
     Sparge,
-
+    BoilFinished,
     Other(String),
 }
 
@@ -53,6 +44,7 @@ impl FromStr for InteractionCode {
             "2" => Ok(Self::AddGrain),
             "3" => Ok(Self::MashOutDoneStartSparge),
             "4" => Ok(Self::Sparge),
+            "6" => Ok(Self::BoilFinished),
             _ => Ok(Self::Other(other.into())),
         }
     }
@@ -66,6 +58,7 @@ impl ToString for InteractionCode {
             Self::AddGrain => "2".into(),
             Self::MashOutDoneStartSparge => "3".into(),
             Self::Sparge => "4".into(),
+            Self::BoilFinished => "6".into(),
             Self::Other(other) => other.into(),
         }
     }
@@ -121,6 +114,9 @@ pub enum GrainfatherNotification {
         manual_power_mode: bool,
         sparge_water_alert_displayed: bool,
     },
+    TemperatureReached,
+    PromptBoilAddition,
+    PromptSpargeWater,
     Interaction {
         interaction_code: InteractionCode,
     },
@@ -152,6 +148,12 @@ impl TryFrom<&[u8]> for GrainfatherNotification {
         let mut ndata_fields = ndata_chars.as_str().split(",");
 
         match ndata_type {
+            'A' => Ok(Self::PromptBoilAddition),
+
+            'B' => Ok(Self::PromptSpargeWater),
+
+            'E' => Ok(Self::TemperatureReached),
+
             'X' => {
                 let desired = ndata_fields.next().unwrap().parse().unwrap();
                 let current = ndata_fields.next().unwrap().parse().unwrap();
