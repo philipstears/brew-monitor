@@ -280,9 +280,11 @@ pub struct Recipe {
     /// The volume of water added during the sparge
     pub sparge_volume: f64,
 
-    // NOTE: this isn't surfaced in the grainfather app
-    /// ? - I think this is shown on the sparge water alert
-    show_water_treatment_alert: bool,
+    /// Determines whether the controller shows a water treatment
+    /// prompt on the countdown to heating the strike water.
+    ///
+    /// This isn't available in the grainfather mobile app.
+    pub show_water_treatment_alert: bool,
 
     /// Controls whether the on-controller sparge counter is shown during the
     /// sparge.
@@ -555,22 +557,27 @@ impl GrainfatherCommand {
         match self {
             Self::Reset => {
                 output.push('Z');
+                output.push(',');
             }
 
             Self::GetFirmwareVersion => {
                 output.push('X');
+                output.push(',');
             }
 
             Self::GetVoltageAndUnits => {
                 output.push('g');
+                output.push(',');
             }
 
             Self::GetBoilTemperature => {
                 output.push('M');
+                output.push(',');
             }
 
             Self::ToggleHeatActive => {
                 output.push('H');
+                output.push(',');
             }
 
             Self::SetHeatActive(active) => {
@@ -581,6 +588,7 @@ impl GrainfatherCommand {
                 } else {
                     output.push('0');
                 }
+                output.push(',');
             }
 
             Self::TogglePumpActive => {
@@ -595,6 +603,7 @@ impl GrainfatherCommand {
                 } else {
                     output.push('0');
                 }
+                output.push(',');
             }
 
             Self::EnableDelayedHeatTimer {
@@ -605,10 +614,12 @@ impl GrainfatherCommand {
                 output.push_str(minutes.to_string().as_ref());
                 output.push(',');
                 output.push_str(seconds.to_string().as_ref());
+                output.push(',');
             }
 
             Self::CancelActiveTimer => {
                 output.push('C');
+                output.push(',');
             }
 
             Self::UpdateActiveTimer(delay) => match delay {
@@ -617,59 +628,72 @@ impl GrainfatherCommand {
                     output.push_str(minutes.to_string().as_ref());
                     output.push(',');
                     output.push_str(seconds.to_string().as_ref());
+                    output.push(',');
                 }
 
                 Delay::Minutes(minutes) => {
                     output.push('S');
                     output.push_str(minutes.to_string().as_ref());
+                    output.push(',');
                 }
             },
 
             Self::PauseOrResumeActiveTimer => {
                 output.push('G');
+                output.push(',');
             }
 
             Self::IncrementTargetTemperature => {
                 output.push('U');
+                output.push(',');
             }
 
             Self::DecrementTargetTemperature => {
                 output.push('D');
+                output.push(',');
             }
 
             Self::SetTargetTemperature(temp) => {
                 output.push('$');
                 output.push_str(temp.to_string().as_ref());
+                output.push(',');
             }
 
             Self::SetLocalBoilTemperature(temp) => {
                 output.push('E');
                 output.push_str(temp.to_string().as_ref());
+                output.push(',');
             }
 
             Self::DismissBoilAdditionAlert => {
                 output.push('A');
+                output.push(',');
             }
 
             Self::CancelOrFinishSession => {
                 output.push('F');
+                output.push(',');
             }
 
             Self::PressSet => {
                 output.push('T');
+                output.push(',');
             }
 
             Self::DisableSpargeWaterAlert => {
                 output.push('V');
+                output.push(',');
             }
 
             Self::ResetRecipeInterrupted => {
                 output.push('!');
+                output.push(',');
             }
 
             Self::SetSpargeProgress(progress) => {
                 output.push_str("b$");
                 output.push_str(progress.to_string().as_ref());
+                output.push(',');
             }
 
             Self::UpdateStep {
@@ -683,6 +707,7 @@ impl GrainfatherCommand {
                 output.push_str(temperature.to_string().as_ref());
                 output.push(',');
                 output.push_str(time_minutes.to_string().as_ref());
+                output.push(',');
             }
 
             Self::SkipToStep {
@@ -713,15 +738,18 @@ impl GrainfatherCommand {
                 } else {
                     '0'
                 });
+                output.push(',');
             }
 
             Self::InteractionComplete => {
                 output.push('I');
+                output.push(',');
             }
 
             Self::SkipToInteraction(code) => {
                 output.push('c');
                 output.push_str(code.to_string().as_ref());
+                output.push(',');
             }
 
             Self::Disconnect(option) => {
@@ -732,6 +760,8 @@ impl GrainfatherCommand {
                     DisconnectOption::CancelSession => output.push('1'),
                     DisconnectOption::AutomaticMode => output.push('2'),
                 }
+
+                output.push(',');
             }
 
             Self::SetSpargeCounterActive(active) => {
@@ -742,6 +772,8 @@ impl GrainfatherCommand {
                 } else {
                     output.push('0');
                 }
+
+                output.push(',');
             }
 
             Self::SetBoilControlActive(active) => {
@@ -752,6 +784,8 @@ impl GrainfatherCommand {
                 } else {
                     output.push('0');
                 }
+
+                output.push(',');
             }
 
             Self::SetManualPowerControlActive(active) => {
@@ -762,6 +796,8 @@ impl GrainfatherCommand {
                 } else {
                     output.push('0');
                 }
+
+                output.push(',');
             }
 
             Self::SetSpargeAlertModeActive(active) => {
@@ -772,6 +808,8 @@ impl GrainfatherCommand {
                 } else {
                     output.push('0');
                 }
+
+                output.push(',');
             }
         }
 
