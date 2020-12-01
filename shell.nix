@@ -31,6 +31,7 @@ in
     buildInputs = with pkgs; [
       rust
       rustracer
+      nodejs
     ];
 
     RUST_SRC_PATH = "${rust}/lib/rustlib/src/rust/src";

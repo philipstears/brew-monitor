@@ -1,3 +1,7 @@
 target/
+
+www/
+node_modules/
+
 *.log
 
