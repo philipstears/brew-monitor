@@ -16,6 +16,9 @@ warp = "0.2.5"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "0.2", features = ["full"] }
 
+warp-embed = "0.1.2"
+rust-embed = "5.6.0"
+
 bm-bluetooth = { path = "../bm-bluetooth" }
 bm-tilt = { path = "../bm-tilt" }
 bm-grainfather = { path = "../bm-grainfather" }

@@ -12,6 +12,10 @@ use std::{collections::HashMap, sync::{mpsc, Arc, RwLock}};
 use warp::{Filter};
 use chrono::prelude::*;
 
+#[derive(rust_embed::RustEmbed)]
+#[folder = "www"]
+struct WebContent;
+
 struct TiltColorParam(TiltColor);
 
 impl TiltColorParam {
@@ -66,9 +70,7 @@ pub async fn main() {
     let gf: Arc<RwLock<Option<GrainfatherClient>>> = Arc::new(RwLock::new(None));
 
     let routes = {
-        let hello = warp::path!("hello" / String)
-            .map(|name| format!("Hello, {}!", name))
-            .with(warp::reply::with::header("Content-Type", "application/json"));
+        let web_content = warp_embed::embed(&WebContent);
 
         let gf_route = {
             let command = {
@@ -140,7 +142,7 @@ pub async fn main() {
                 })
         };
 
-        hello
+        web_content
             .or(tilt_route)
             .or(gf_route)
     };
