@@ -1,0 +1,11 @@
+{
+    "type": "SkipToStep",
+    "data": {
+        "step_number": 5,
+        "can_edit_minutes": 0,
+        "time_left_minutes": 0,
+        "time_left_seconds": 0,
+        "skip_ramp": true,
+        "disable_add_grain": true
+    }
+}

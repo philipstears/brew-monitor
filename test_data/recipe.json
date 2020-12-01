@@ -1,8 +1,8 @@
 {
-    "boil_time": 60,
+    "boil_time": 9,
     "mash_volume": 13.25,
     "sparge_volume": 14.64,
-    "show_water_treatment_alert": true,
+    "show_water_treatment_alert": false,
     "show_sparge_counter": true,
     "show_sparge_alert": true,
     "delay": { "type": "MinutesSeconds", "data": [5, 0] },
@@ -12,14 +12,14 @@
     "boil_power_mode": false,
     "strike_temp_mode": false,
     "boil_steps": [
-        60,
-        30,
-        5
+        9,
+        6,
+        3
     ],
     "mash_steps": [
-        { "temperature": 30, "minutes": 5 },
-        { "temperature": 40, "minutes": 6 },
-        { "temperature": 50, "minutes": 7 }
+        { "temperature": 70, "minutes": 3 },
+        { "temperature": 75, "minutes": 3 },
+        { "temperature": 80, "minutes": 3 }
     ]
 }
 
