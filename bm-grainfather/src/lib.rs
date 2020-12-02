@@ -16,7 +16,7 @@ const COMMAND_LEN: usize = 19;
 // when the sparge water is added, and the user
 // presses "Set" to confirm its addition, we receive
 // an interaction notification with code "C".
-#[derive(Debug, Eq, PartialEq, Clone, serde::Deserialize)]
+#[derive(Debug, Eq, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum InteractionCode {
     None,
@@ -69,19 +69,22 @@ pub type SpargeProgress = u8;
 
 pub type StepNumber = u8;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type")]
 pub enum Voltage {
     V110,
     V230,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type")]
 pub enum Units {
     Fahrenheit,
     Celsius,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum GrainfatherNotification {
     Temp {
         desired: f64,
@@ -475,7 +478,7 @@ impl Default for Recipe {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum Delay {
     Minutes(u32),
@@ -483,15 +486,15 @@ pub enum Delay {
 }
 
 // TODO: what do these mean??
-#[derive(Debug, serde::Deserialize)]
-#[serde(tag = "type", content = "data")]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type")]
 pub enum DisconnectOption {
     ManualMode,
     CancelSession,
     AutomaticMode,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum GrainfatherCommand {
     Reset,

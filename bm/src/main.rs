@@ -9,6 +9,7 @@ use bm_tilt::*;
 
 use std::{collections::HashMap, sync::{mpsc, Arc, RwLock}};
 
+use futures::{FutureExt, StreamExt, SinkExt};
 use warp::{Filter};
 use chrono::prelude::*;
 
@@ -73,6 +74,40 @@ pub async fn main() {
         let web_content = warp_embed::embed(&WebContent);
 
         let gf_route = {
+            let ws = {
+                let gf = gf.clone();
+
+                warp::path!("ws")
+                    .and(warp::ws())
+                    .map(move |ws: warp::ws::Ws| {
+                        let gf = gf.clone();
+
+                        ws.on_upgrade(move |websocket| {
+                            let (mut ws_tx, _ws_rx) = websocket.split();
+                            let (gf_tx, gf_rx) = mpsc::channel();
+
+                            {
+                                let guard = gf.read().unwrap();
+
+                                if let Some(client) = &*guard {
+                                    client.subscribe(Box::new(move |notification| {
+                                        gf_tx.send(notification).unwrap();
+                                    })).unwrap();
+                                }
+                            }
+
+                            async move {
+                                loop {
+                                    let notification = gf_rx.recv().unwrap();
+                                    let json = serde_json::to_string(&notification).unwrap();
+                                    let message = warp::ws::Message::text(json);
+                                    ws_tx.send(message).await.unwrap();
+                                }
+                            }
+                        })
+                    })
+            };
+
             let command = {
                 let gf = gf.clone();
 
@@ -119,7 +154,7 @@ pub async fn main() {
                     })
             };
 
-            warp::path("gf").and(command.or(recipe))
+            warp::path("gf").and(command.or(recipe).or(ws))
         };
 
         let tilt_route = {
