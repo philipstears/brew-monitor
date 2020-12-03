@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Grainfather } from "./gf/index";
 
 import {
   HashRouter as Router,
@@ -32,8 +33,7 @@ const Home = () => (
     <div>
       <article>
         <h2>Home</h2>
-        <p>
-        </p>
+        <Grainfather />
       </article>
     </div>
 );

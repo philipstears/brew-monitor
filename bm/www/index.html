@@ -8,13 +8,5 @@
     <body>
         <div id="bm-app">
         </div>
-        <script>
-            let ws = new WebSocket(`ws://${window.location.host}/gf/ws`);
-
-            ws.onmessage = messageEvent => {
-                let notification = JSON.parse(messageEvent.data);
-                console.log("Notification", notification);
-            };
-        </script>
     </body>
 </html>
