@@ -4,12 +4,14 @@ pub use bluetooth_discovery::*;
 mod grainfather_client;
 pub use grainfather_client::*;
 
-use bm_grainfather::*;
+use bm_grainfather::proto::command::*;
+use bm_grainfather::proto::recipe::*;
+
 use bm_tilt::*;
 
 use std::{collections::HashMap, sync::{mpsc, Arc, RwLock}};
 
-use futures::{FutureExt, StreamExt, SinkExt};
+use futures::{StreamExt, SinkExt};
 use warp::{Filter};
 use chrono::prelude::*;
 

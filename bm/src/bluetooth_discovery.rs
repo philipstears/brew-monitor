@@ -7,7 +7,7 @@ use std::{
 };
 
 use bm_bluetooth::*;
-use bm_grainfather::*;
+use bm_grainfather::bluetooth::*;
 use bm_tilt::*;
 
 use async_std::task::block_on;
@@ -93,7 +93,7 @@ impl<'z> BluetoothDiscovery<'z>
             match response.event {
                 Event::Discovering {
                     discovering,
-                    address_type,
+                    address_type: _,
                 } => {
                     // eprintln!("discovering: {} {:?}", discovering, address_type);
 

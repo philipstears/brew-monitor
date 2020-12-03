@@ -1,7 +1,6 @@
 use bm_bluetooth::*;
 use std::{
     convert::{TryFrom, TryInto},
-    str::FromStr,
 };
 
 const TILT_RED: u128 = 0xA495BB10C5B14B44B5121370F02D74DE;

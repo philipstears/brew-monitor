@@ -1,4 +1,8 @@
-use bm_grainfather::*;
+use bm_grainfather::bluetooth::*;
+use bm_grainfather::proto::*;
+use bm_grainfather::proto::command::*;
+use bm_grainfather::proto::recipe::*;
+use bm_grainfather::proto::notification::*;
 
 use btleplug::api::{Characteristic, Peripheral, UUID};
 use btleplug::Error;
