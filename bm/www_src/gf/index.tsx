@@ -37,7 +37,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             <div>Grainfather!</div>
             <div><Heat command_url={this.state.command_url} data={this.state.status1} /></div>
             <div><Pump command_url={this.state.command_url} data={this.state.status1} /></div>
-            <div>{this.state.temp.current} / {this.state.temp.desired}</div>
+            <div><Temp command_url={this.state.command_url} data={this.state.temp} /></div>
         </React.Fragment>
     );
 
@@ -97,6 +97,38 @@ export class Heat extends React.Component<GrainfatherData<Proto.Status1Data>, {}
             type: "ToggleHeatActive",
         };
 
+        await fetch(this.props.command_url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(command),
+        });
+    };
+}
+
+export class Temp extends React.Component<GrainfatherData<Proto.TempData>, {}> {
+    render = () => (
+        <div className="temperature-controller">
+            <button onClick={this.handleDownClick}>-</button>
+            <div className="temperature-controller-display">{this.props.data.current} / {this.props.data.desired}</div>
+            <button onClick={this.handleUpClick}>+</button>
+        </div>
+    );
+
+    handleUpClick = async () => {
+        this.command({
+            type: "IncrementTargetTemperature",
+        });
+    };
+
+    handleDownClick = async () => {
+        this.command({
+            type: "DecrementTargetTemperature",
+        });
+    };
+
+    command = async (command: any) => {
         await fetch(this.props.command_url, {
             method: "POST",
             headers: {

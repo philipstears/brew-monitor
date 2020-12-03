@@ -4,3 +4,10 @@ html, body {
     border: 0;
 }
 
+.temperature-container {
+    display: flex;
+}
+
+.temperature-controller-display {
+    display: inline-block;
+}
