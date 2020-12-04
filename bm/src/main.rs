@@ -79,7 +79,8 @@ impl GrainfatherWebSocketHandler {
 
             if let Some(client) = &*guard {
                 client.subscribe(Box::new(move |notification| {
-                    gf_tx.send(notification).unwrap();
+                    if let Err(e) = gf_tx.send(notification) {
+                    }
                 })).unwrap();
             }
         }
@@ -88,7 +89,11 @@ impl GrainfatherWebSocketHandler {
             let notification = gf_rx.recv().unwrap();
             let json = serde_json::to_string(&notification).unwrap();
             let message = warp::ws::Message::text(json);
-            ws_tx.send(message).await.unwrap();
+
+            if let Err(e) = ws_tx.send(message).await {
+                println!("Error occurred sending to socket {:?}", e);
+                return;
+            }
         }
     }
 }
