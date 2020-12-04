@@ -66,6 +66,33 @@ struct GrainfatherRequest {
 struct GrainfatherResponse {
 }
 
+struct GrainfatherWebSocketHandler {
+}
+
+impl GrainfatherWebSocketHandler {
+    async fn run(gf: Arc<RwLock<Option<GrainfatherClient>>>, ws: warp::ws::WebSocket) {
+        let (mut ws_tx, _ws_rx) = ws.split();
+        let (gf_tx, gf_rx) = mpsc::channel();
+
+        {
+            let guard = gf.read().unwrap();
+
+            if let Some(client) = &*guard {
+                client.subscribe(Box::new(move |notification| {
+                    gf_tx.send(notification).unwrap();
+                })).unwrap();
+            }
+        }
+
+        loop {
+            let notification = gf_rx.recv().unwrap();
+            let json = serde_json::to_string(&notification).unwrap();
+            let message = warp::ws::Message::text(json);
+            ws_tx.send(message).await.unwrap();
+        }
+    }
+}
+
 #[tokio::main]
 pub async fn main() {
     let tilts = Arc::new(RwLock::new(HashMap::<TiltColor, DeviceInfo<Tilt>>::new()));
@@ -85,27 +112,7 @@ pub async fn main() {
                         let gf = gf.clone();
 
                         ws.on_upgrade(move |websocket| {
-                            let (mut ws_tx, _ws_rx) = websocket.split();
-                            let (gf_tx, gf_rx) = mpsc::channel();
-
-                            {
-                                let guard = gf.read().unwrap();
-
-                                if let Some(client) = &*guard {
-                                    client.subscribe(Box::new(move |notification| {
-                                        gf_tx.send(notification).unwrap();
-                                    })).unwrap();
-                                }
-                            }
-
-                            async move {
-                                loop {
-                                    let notification = gf_rx.recv().unwrap();
-                                    let json = serde_json::to_string(&notification).unwrap();
-                                    let message = warp::ws::Message::text(json);
-                                    ws_tx.send(message).await.unwrap();
-                                }
-                            }
+                            GrainfatherWebSocketHandler::run(gf, websocket)
                         })
                     })
             };
