@@ -40,6 +40,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             <div><Temp command_url={this.state.command_url} data={this.state.temp} /></div>
             <div>
                 <Recipe
+                    command_url={this.state.command_url}
                     recipe_url={this.state.recipe_url}
                     status1={this.state.status1}
                     status2={this.state.status2}
@@ -156,6 +157,7 @@ interface RecipeState {
 }
 
 interface RecipeProps {
+    command_url: string;
     recipe_url: string;
     status1: Proto.Status1Data;
     status2: Proto.Status2Data;
@@ -198,9 +200,26 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
             <div>
                 {this.props.status1.auto_mode_active ? "Recipe Active" : "Recipe Not Active"}
             </div>
-            <button onClick={this.handleSendRecipe}>
-                Send Recipe
-            </button>
+            <div>
+                <button onClick={this.handleSendRecipe}>
+                    Send Recipe
+                </button>
+            </div>
+            <div>
+                <button onClick={this.handleCancelTimer}>
+                    Cancel Timer
+                </button>
+            </div>
+            <div>
+                <button onClick={this.handleSkipToAddGrain}>
+                    Skip to Add Grain
+                </button>
+            </div>
+            <div>
+                <button onClick={this.handleCancelRecipe}>
+                    Cancel Recipe
+                </button>
+            </div>
         </React.Fragment>
     );
 
@@ -211,6 +230,44 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(this.state.recipe),
+        });
+    };
+
+    handleCancelTimer = async () => {
+        await this.command({
+            type: "UpdateActiveTimer",
+            data: {
+                type: "MinutesSeconds",
+                data: [0, 1],
+            }
+        });
+    };
+
+    handleSkipToAddGrain = async () => {
+        await this.command({
+            type: "SkipToInteraction",
+            data: {
+                type: "AddGrain",
+            }
+        });
+    };
+
+    handleCancelRecipe = async () => {
+        await this.command({
+            type: "Disconnect",
+            data: {
+                type: "CancelSession",
+            }
+        });
+    };
+
+    command = async (command: any) => {
+        await fetch(this.props.command_url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(command),
         });
     };
 }
