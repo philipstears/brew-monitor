@@ -34,17 +34,25 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
 
     render = () => (
         <React.Fragment>
-            <div>Grainfather!</div>
-            <div><Heat command_url={this.state.command_url} data={this.state.status1} /></div>
-            <div><Pump command_url={this.state.command_url} data={this.state.status1} /></div>
-            <div><Temp command_url={this.state.command_url} data={this.state.temp} /></div>
-            <div>
-                <Recipe
+            <div id="bm-overview-panel">
+                <Heat
                     command_url={this.state.command_url}
-                    recipe_url={this.state.recipe_url}
                     status1={this.state.status1}
-                    status2={this.state.status2}
-                />
+                    temp={this.state.temp} />
+
+                <Pump
+                    command_url={this.state.command_url}
+                    data={this.state.status1} />
+            </div>
+            <div id="bm-detail-panel">
+                <div>
+                    <Recipe
+                        command_url={this.state.command_url}
+                        recipe_url={this.state.recipe_url}
+                        status1={this.state.status1}
+                        status2={this.state.status2}
+                    />
+                </div>
             </div>
         </React.Fragment>
     );
@@ -73,9 +81,13 @@ export interface GrainfatherData<T> {
 
 export class Pump extends React.Component<GrainfatherData<Proto.Status1Data>, {}> {
     render = () => (
-        <button onClick={this.handleClick}>
-            {this.props.data.pump_active ? "Pump On" : "Pump Off"}
-        </button>
+        <div className="pump-controls">
+            <button
+                className={"pump-button " + (this.props.data.pump_active ? "on" : "off")}
+                onClick={this.handleClick}>
+                Pump
+            </button>
+        </div>
     );
 
     handleClick = async () => {
@@ -93,41 +105,37 @@ export class Pump extends React.Component<GrainfatherData<Proto.Status1Data>, {}
     };
 }
 
-export class Heat extends React.Component<GrainfatherData<Proto.Status1Data>, {}> {
-    render = () => (
-        <div>
-            <button onClick={this.handleClick}>
-                {this.props.data.heat_active ? "Heat On" : "Heat Off"}
-            </button>
-            <div>
-                {this.props.data.step_ramp_active ? "Ramping Heat for Step" : ""}
-            </div>
-        </div>
-    );
-
-    handleClick = async () => {
-        let command = {
-            type: "ToggleHeatActive",
-        };
-
-        await fetch(this.props.command_url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(command),
-        });
-    };
+export interface HeatProps {
+    command_url: string,
+    status1: Proto.Status1Data,
+    temp: Proto.TempData,
 }
 
-export class Temp extends React.Component<GrainfatherData<Proto.TempData>, {}> {
+export class Heat extends React.Component<HeatProps, {}> {
+            // <div>
+            //     {this.props.status1.step_ramp_active ? "Ramping Heat for Step" : ""}
+            // </div>
+
     render = () => (
-        <div className="temperature-controller">
-            <button onClick={this.handleDownClick}>-</button>
-            <div className="temperature-controller-display">{this.props.data.current} / {this.props.data.desired}</div>
-            <button onClick={this.handleUpClick}>+</button>
+        <div className="heat-controls">
+            <button className="heat-decrease" onClick={this.handleDownClick}>-</button>
+            <button
+                className={"heat-button " + (this.props.status1.heat_active ? "on" : "off")}
+                onClick={this.handleHeatToggleClick}>
+                <div className="temp-display">
+                    <div className="temp-display-current">{this.props.temp.current}°C</div>
+                    <div className="temp-display-desired">{this.props.temp.desired}°C</div>
+                </div>
+            </button>
+            <button className="heat-increase" onClick={this.handleUpClick}>+</button>
         </div>
     );
+
+    handleHeatToggleClick = async () => {
+        this.command({
+            type: "ToggleHeatActive",
+        });
+    };
 
     handleUpClick = async () => {
         this.command({

@@ -12,28 +12,11 @@ export interface AppProps {
 }
 
 export const App = (props: AppProps) => (
-  <Router>
-      <nav>
-        <ul>
-          <li><Link to="/">Home</Link></li>
-        </ul>
-      </nav>
-
-    <div id="content">
-      <Switch>
-        <Route path="/">
-          <Home />
-        </Route>
-      </Switch>
-    </div>
-  </Router>
-);
-
-const Home = () => (
-    <div>
-      <article>
-        <h2>Home</h2>
-        <Grainfather />
-      </article>
-    </div>
+    <Router>
+        <Switch>
+            <Route path="/">
+                <Grainfather />
+            </Route>
+        </Switch>
+    </Router>
 );

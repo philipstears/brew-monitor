@@ -118,14 +118,21 @@ impl<'z> BluetoothDiscovery<'z>
                         self.sender.send(BluetoothDiscoveryEvent::DiscoveredTilt(tilt)).unwrap();
                     }
                     else if let Ok(_gf_info) = Grainfather::try_from(report2) {
+
+                        println!("Found a grainfather with address {}", address);
+
                         let gf_peripheral = self.btle_central
                             .peripherals()
                             .into_iter()
                             .find(|p| p.address().address == address.as_ref())
                             .unwrap();
 
+                        println!("Found the grainfather peripheral with address {}", address);
+
                         let gf = BtleplugGrainfatherClientImpl::new(gf_peripheral);
                         let gf = GrainfatherClient::try_from(Box::new(gf)).unwrap();
+
+                        println!("Connecting to the grainfather peripheral with address {}", address);
 
                         self.sender.send(BluetoothDiscoveryEvent::DiscoveredGrainfather(gf)).unwrap();
                     }

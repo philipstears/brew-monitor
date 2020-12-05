@@ -196,7 +196,7 @@ pub async fn main() {
             .or(gf_route)
     };
 
-    let web = warp::serve(routes).run(([0, 0, 0, 0], 3030));
+    let web = warp::serve(routes).run(([0, 0, 0, 0], 30080));
 
     let (discovery_sender, discovery_receiver) = mpsc::channel();
 

@@ -2,6 +2,105 @@ html, body {
     width: 100%;
     height: 100%;
     border: 0;
+    padding: 0;
+    margin: 0;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16pt;
+}
+
+#bm-app {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+}
+
+#bm-overview-panel {
+    grid-column: 1;
+    background-color: #1e1e24;
+}
+
+#bm-detail-panel {
+    grid-column: 2;
+    background-color: #26262c;
+}
+
+#bm-overview-panel,
+#bm-detail-panel {
+    padding: 10px;
+    color: #fff;
+}
+
+.heat-controls {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    column-gap: 10px;
+    margin: 10px;
+}
+
+.heat-decrease {
+    justify-self: end;
+}
+
+.heat-increase {
+    justify-self: start;
+}
+
+.heat-increase,
+.heat-decrease {
+    border: none;
+    border-radius: 50%;
+    background-color: #aaa;
+    width: 25px;
+    height: 25px;
+    align-self: center;
+}
+
+.pump-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    margin: 10px;
+}
+
+.heat-button,
+.pump-button {
+    width: 100px;
+    height: 100px;
+    background: inherit;
+    border-radius: 50%;
+    border: 6px solid #ccc;
+    color: #fff;
+    font-size: 0.8rem;
+}
+
+.heat-button:focus,
+.pump-button:focus {
+    outline: none;
+}
+
+.heat-button.on {
+    border-color: #d33d3d;
+    color: #fff;
+}
+
+.temp-display {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+}
+
+.temp-display-desired {
+    border-top: 1px solid #aaa;
+    font-size: 0.6rem;
+}
+
+.temp-display-current,
+.temp-display-desired {
+    padding: 5px;
+}
+
+.pump-button.on {
+    border-color: #40cb40;
 }
 
 .temperature-container {
