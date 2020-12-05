@@ -17,6 +17,7 @@ pub enum InteractionCode {
     AddGrain,
     MashOutDoneStartSparge,
     Sparge,
+    BoilReached,
     BoilFinished,
     Other(String),
 }
@@ -37,6 +38,7 @@ impl FromStr for InteractionCode {
             "2" => Ok(Self::AddGrain),
             "3" => Ok(Self::MashOutDoneStartSparge),
             "4" => Ok(Self::Sparge),
+            "5" => Ok(Self::BoilReached),
             "6" => Ok(Self::BoilFinished),
             _ => Ok(Self::Other(other.into())),
         }
@@ -51,6 +53,7 @@ impl ToString for InteractionCode {
             Self::AddGrain => "2".into(),
             Self::MashOutDoneStartSparge => "3".into(),
             Self::Sparge => "4".into(),
+            Self::BoilReached => "5".into(),
             Self::BoilFinished => "6".into(),
             Self::Other(other) => other.into(),
         }

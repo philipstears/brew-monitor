@@ -1,4 +1,4 @@
-use super::command::{COMMAND_LEN, finish_command};
+use super::command::{COMMAND_LEN, finish_command, GrainfatherCommand};
 use std::fmt::Write;
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -16,6 +16,9 @@ pub struct MashStep {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Recipe {
+    /// The temperature for the boil
+    pub boil_temperature: f64,
+
     /// The total duration of the boil
     pub boil_time: u8,
 
@@ -73,6 +76,8 @@ impl Recipe {
     pub fn to_commands(&self) -> Vec<Vec<u8>> {
         // TODO: this can be computed
         let mut commands = Vec::with_capacity(10);
+
+        commands.push(GrainfatherCommand::SetLocalBoilTemperature(self.boil_temperature).to_vec());
 
         commands.push({
             let mut command = String::with_capacity(COMMAND_LEN);
@@ -200,6 +205,7 @@ impl Recipe {
 impl Default for Recipe {
     fn default() -> Self {
         Self {
+            boil_temperature: 99.5,
             boil_time: 60,
             mash_volume: 13.25,
             sparge_volume: 14.64,

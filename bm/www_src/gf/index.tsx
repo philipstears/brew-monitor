@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as Modal from "react-modal";
 import * as Proto from "./types";
 
 export interface GrainfatherProps {
@@ -12,6 +13,7 @@ export interface GrainfatherState {
     status1: Proto.Status1Data;
     status2: Proto.Status2Data;
     temp: Proto.TempData;
+    timer: Proto.TimerData;
 }
 
 export class Grainfather extends React.Component<GrainfatherProps, GrainfatherState> {
@@ -26,6 +28,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             status1: Proto.defaultStatus1(),
             status2: Proto.defaultStatus2(),
             temp: Proto.defaultTemp(),
+            timer: Proto.defaultTimer(),
         };
 
         let ws = new WebSocket(this.state.ws_url);
@@ -38,11 +41,13 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                 <Heat
                     command_url={this.state.command_url}
                     status1={this.state.status1}
-                    temp={this.state.temp} />
+                    temp={this.state.temp}
+                />
 
                 <Pump
                     command_url={this.state.command_url}
-                    data={this.state.status1} />
+                    data={this.state.status1}
+                />
             </div>
             <div id="bm-detail-panel">
                 <div>
@@ -51,6 +56,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                         recipe_url={this.state.recipe_url}
                         status1={this.state.status1}
                         status2={this.state.status2}
+                        timer={this.state.timer}
                     />
                 </div>
             </div>
@@ -69,6 +75,9 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                 break;
             case "Temp":
                 this.setState({...this.state, temp: notification.data});
+                break;
+            case "DelayedHeatTimer":
+                this.setState({...this.state, timer: notification.data});
                 break;
         }
     };
@@ -169,6 +178,7 @@ interface RecipeProps {
     recipe_url: string;
     status1: Proto.Status1Data;
     status2: Proto.Status2Data;
+    timer: Proto.TimerData;
 }
 
 export class Recipe extends React.Component<RecipeProps, RecipeState> {
@@ -177,6 +187,7 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
 
         this.state = {
             recipe: {
+                "boil_temperature": 55,
                 "boil_time": 9,
                 "mash_volume": 13.25,
                 "sparge_volume": 14.64,
@@ -195,34 +206,64 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
                     3
                 ],
                 "mash_steps": [
-                    { "temperature": 70, "minutes": 3 },
-                    { "temperature": 75, "minutes": 3 },
-                    { "temperature": 80, "minutes": 3 }
+                    { "temperature": 25, "minutes": 3 },
+                    { "temperature": 35, "minutes": 3 },
+                    { "temperature": 45, "minutes": 3 }
                 ]
             },
         };
     }
 
-    render = () => (
+    render() {
+        if (this.props.status1.auto_mode_active) {
+            if (this.props.status1.delayed_heat_mode_active) {
+                return this.renderRecipeCountDown();
+            }
+            else {
+                return this.renderRecipeActive();
+            }
+        }
+        else {
+            return this.renderRecipeInactive();
+        }
+    }
+
+    renderRecipeCountDown() {
+        if (this.props.timer.remaining_minutes == 0) {
+            return <div>Timer Finished</div>;
+        }
+
+        return <React.Fragment>
+            <div>
+                Recipe Delay {this.props.timer.remaining_minutes - 1}:{this.props.timer.remaining_seconds}
+            </div>
+            <div>
+                <button onClick={this.handleSkipTimer}>
+                    Skip Timer
+                </button>
+            <div>
+                <button onClick={this.handleCancelRecipe}>
+                    Cancel Recipe
+                </button>
+            </div>
+            </div>
+        </React.Fragment>
+    }
+
+    renderRecipeActive = () => (
         <React.Fragment>
+            <Modal
+                isOpen={this.props.status1.interaction_mode_active}
+                className="bm-modal"
+                overlayClassName="bm-modal-overlay"
+            >
+                {this.renderInteraction()}
+            </Modal>
             <div>
-                {this.props.status1.auto_mode_active ? "Recipe Active" : "Recipe Not Active"}
+                Recipe Active (Step {this.props.status1.step_number})
             </div>
-            <div>
-                <button onClick={this.handleSendRecipe}>
-                    Send Recipe
-                </button>
-            </div>
-            <div>
-                <button onClick={this.handleCancelTimer}>
-                    Cancel Timer
-                </button>
-            </div>
-            <div>
-                <button onClick={this.handleSkipToAddGrain}>
-                    Skip to Add Grain
-                </button>
-            </div>
+            {this.renderHeatingMashingOrBoiling()}
+            {this.maybeRenderSkipToAddGrain()}
             <div>
                 <button onClick={this.handleCancelRecipe}>
                     Cancel Recipe
@@ -230,6 +271,139 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
             </div>
         </React.Fragment>
     );
+
+    renderRecipeInactive = () => (
+        <React.Fragment>
+            <div>
+                Recipe Inactive
+            </div>
+            <div>
+                <button onClick={this.handleSendRecipe}>
+                    Send Recipe
+                </button>
+            </div>
+        </React.Fragment>
+    );
+
+    renderInteraction() {
+        switch (this.props.status1.interaction_code.type) {
+            case "AddGrain":
+                return this.renderInteractionAddGrain();
+            case "MashOutDoneStartSparge":
+                return this.renderInteractionStartSparge();
+            case "Sparge":
+                return this.renderInteractionSparge();
+            case "BoilReached":
+                return this.renderInteractionBoilReached();
+            case "BoilFinished":
+                return this.renderInteractionBoilFinished();
+            default:
+                return this.renderInteractionUnknown();
+        }
+    }
+
+    renderInteractionAddGrain = () => (
+        <React.Fragment>
+            <h2>Add Grain</h2>
+            <p>
+                Press "Grain Added" to start mash.
+            </p>
+            <button onClick={this.handleSet}>
+                Grain Added
+            </button>
+        </React.Fragment>
+    );
+
+    renderInteractionStartSparge = () => (
+        <React.Fragment>
+            <h2>Mash Out Done</h2>
+            <button onClick={this.handleSet}>
+                Start Sparge
+            </button>
+        </React.Fragment>
+    );
+
+    renderInteractionSparge = () => (
+        <React.Fragment>
+            <h2>Sparging</h2>
+            <button onClick={this.handleSet}>
+                Sparge Done
+            </button>
+        </React.Fragment>
+    );
+
+    renderInteractionBoilReached = () => (
+        <React.Fragment>
+            <h2>Boil Reached</h2>
+            <button onClick={this.handleSet}>
+                OK
+            </button>
+        </React.Fragment>
+    );
+
+    renderInteractionBoilFinished = () => (
+        <React.Fragment>
+            <h2>Boil Done</h2>
+            <button onClick={this.handleSet}>
+                OK
+            </button>
+        </React.Fragment>
+    );
+
+    renderInteractionUnknown = () => (
+        <React.Fragment>
+            <h2>Unknown Interaction: {JSON.stringify(this.props.status1.interaction_code)}</h2>
+            <button onClick={this.handleSet}>
+                OK
+            </button>
+        </React.Fragment>
+    );
+
+    renderHeatingMashingOrBoiling() {
+        if (this.props.status1.step_number > this.state.recipe.mash_steps.length) {
+            if (this.props.timer.active) {
+                return this.renderBoiling();
+            }
+            else {
+                return this.renderHeatingToBoil();
+            }
+        }
+        else if (this.props.timer.active) {
+            return this.renderMashing();
+        }
+        else {
+            return this.renderHeating();
+        }
+    }
+
+    renderHeatingToBoil = () => (
+        <div>Heating to Boil Temperature</div>
+    );
+
+    renderBoiling = () => (
+        <div>Boiling - Time Remaining {this.props.timer.remaining_minutes - 1}:{this.props.timer.remaining_seconds}</div>
+    );
+
+    renderHeating = () => (
+        <div>Heating to Mash Temperature</div>
+    );
+
+    renderMashing = () => (
+        <div>Mashing - Time Remaining {this.props.timer.remaining_minutes - 1}:{this.props.timer.remaining_seconds}</div>
+    );
+
+    maybeRenderSkipToAddGrain() {
+        if (this.props.status1.step_number == 1) {
+            return <div>
+                <button onClick={this.handleSkipToAddGrain}>
+                    Skip to Add Grain
+                </button>
+            </div>;
+        }
+        else {
+            return <></>;
+        }
+    }
 
     handleSendRecipe = async () => {
         await fetch(this.props.recipe_url, {
@@ -241,7 +415,7 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
         });
     };
 
-    handleCancelTimer = async () => {
+    handleSkipTimer = async () => {
         await this.command({
             type: "UpdateActiveTimer",
             data: {
@@ -266,6 +440,12 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
             data: {
                 type: "CancelSession",
             }
+        });
+    };
+
+    handleSet = async () => {
+        await this.command({
+            type: "PressSet",
         });
     };
 

@@ -1,10 +1,57 @@
 // -----------------------------------------------------------------------------
+// Common
+// -----------------------------------------------------------------------------
+export type InteractionCode
+    = InteractionNone
+    | InteractionSkipDelayedRecipe
+    | InteractionAddGrain
+    | InteractionMashOutDoneStartSparge
+    | InteractionSparge
+    | InteractionBoilReached
+    | InteractionBoilFinished
+    | InteractionOther;
+
+interface InteractionNone {
+    type: "None";
+}
+
+interface InteractionSkipDelayedRecipe {
+    type: "SkipDelayedRecipe";
+}
+
+interface InteractionAddGrain {
+    type: "AddGrain";
+}
+
+interface InteractionMashOutDoneStartSparge {
+    type: "MashOutDoneStartSparge";
+}
+
+interface InteractionSparge {
+    type: "Sparge";
+}
+
+interface InteractionBoilReached {
+    type: "BoilReached";
+}
+
+interface InteractionBoilFinished {
+    type: "BoilFinished";
+}
+
+interface InteractionOther {
+    type: "Other";
+    data: string[];
+}
+
+// -----------------------------------------------------------------------------
 // Notitifications
 // -----------------------------------------------------------------------------
 export type Notification
     = Status1Notification
     | Status2Notification
     | TempNotification
+    | TimerNotification
     ;
 
 export interface Status1Notification {
@@ -17,6 +64,10 @@ export interface Status1Data {
     pump_active: boolean;
     auto_mode_active: boolean;
     step_ramp_active: boolean;
+    interaction_mode_active: boolean;
+    interaction_code: InteractionCode;
+    step_number: number;
+    delayed_heat_mode_active: boolean;
 }
 
 export interface Status2Notification {
@@ -36,6 +87,17 @@ export interface TempNotification {
 export interface TempData {
     desired: number;
     current: number;
+}
+
+export interface TimerNotification {
+    type: "DelayedHeatTimer";
+    data: TimerData;
+}
+
+export interface TimerData {
+    active: boolean;
+    remaining_minutes: number;
+    remaining_seconds: number;
 }
 
 // -----------------------------------------------------------------------------
@@ -58,6 +120,7 @@ export interface RecipeMashStep {
 }
 
 export interface Recipe {
+    boil_temperature: number;
     boil_time: number;
     mash_volume: number;
     sparge_volume: number;
@@ -75,7 +138,16 @@ export interface Recipe {
 }
 
 export function defaultStatus1(): Status1Data {
-    return { heat_active: false, pump_active: false, auto_mode_active: false, step_ramp_active: false, };
+    return {
+        heat_active: false,
+        pump_active: false,
+        auto_mode_active: false,
+        step_ramp_active: false,
+        interaction_mode_active: false,
+        interaction_code: { type: "None" },
+        step_number: 0,
+        delayed_heat_mode_active: false,
+    };
 }
 
 export function defaultStatus2(): Status2Data {
@@ -84,4 +156,12 @@ export function defaultStatus2(): Status2Data {
 
 export function defaultTemp(): TempData {
     return { desired: 0, current: 0 };
+}
+
+export function defaultTimer(): TimerData {
+    return {
+        active: false,
+        remaining_minutes: 0,
+        remaining_seconds: 0,
+    };
 }
