@@ -290,6 +290,7 @@ name = "bm-grainfather"
 version = "0.1.0"
 dependencies = [
  "bm-bluetooth",
+ "btleplug",
  "serde",
  "uuid",
 ]

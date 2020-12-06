@@ -1,7 +1,5 @@
 use bm_bluetooth::*;
-use std::{
-    convert::{TryFrom, TryInto},
-};
+use std::convert::{TryFrom, TryInto};
 
 const TILT_RED: u128 = 0xA495BB10C5B14B44B5121370F02D74DE;
 const TILT_GREEN: u128 = 0xA495BB20C5B14B44B5121370F02D74DE;
@@ -36,10 +34,10 @@ pub enum TiltConvertError {
     UnknownUniqueId,
 }
 
-impl TryFrom<EIRData<'_>> for Tilt {
+impl TryFrom<&EIRData<'_>> for Tilt {
     type Error = TiltConvertError;
 
-    fn try_from(report: EIRData) -> Result<Self, Self::Error> {
+    fn try_from(report: &EIRData) -> Result<Self, Self::Error> {
         for entry in report.into_iter() {
             if let EIREntry::ManufacturerSpecific(ms) = entry {
                 if let ManufacturerSpecificEntry::Apple(apple) = ms {

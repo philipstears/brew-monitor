@@ -1,19 +1,20 @@
 mod bluetooth_discovery;
 pub use bluetooth_discovery::*;
 
-mod grainfather_client;
-pub use grainfather_client::*;
-
+use bm_grainfather::bluetooth::btleplug::*;
 use bm_grainfather::proto::command::*;
 use bm_grainfather::proto::recipe::*;
 
 use bm_tilt::*;
 
-use std::{collections::HashMap, sync::{mpsc, Arc, RwLock}};
+use std::{
+    collections::HashMap,
+    sync::{mpsc, Arc, RwLock},
+};
 
-use futures::{StreamExt, SinkExt};
-use warp::{Filter};
 use chrono::prelude::*;
+use futures::{SinkExt, StreamExt};
+use warp::Filter;
 
 #[derive(rust_embed::RustEmbed)]
 #[folder = "www"]
@@ -59,15 +60,12 @@ struct TiltStatus {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-struct GrainfatherRequest {
-}
+struct GrainfatherRequest {}
 
 #[derive(serde::Serialize, serde::Deserialize)]
-struct GrainfatherResponse {
-}
+struct GrainfatherResponse {}
 
-struct GrainfatherWebSocketHandler {
-}
+struct GrainfatherWebSocketHandler {}
 
 impl GrainfatherWebSocketHandler {
     async fn run(gf: Arc<RwLock<Option<GrainfatherClient>>>, ws: warp::ws::WebSocket) {
@@ -78,10 +76,7 @@ impl GrainfatherWebSocketHandler {
             let guard = gf.read().unwrap();
 
             if let Some(client) = &*guard {
-                client.subscribe(Box::new(move |notification| {
-                    if let Err(e) = gf_tx.send(notification) {
-                    }
-                })).unwrap();
+                client.subscribe(Box::new(move |notification| if let Err(e) = gf_tx.send(notification) {})).unwrap();
             }
         }
 
@@ -111,24 +106,18 @@ pub async fn main() {
             let ws = {
                 let gf = gf.clone();
 
-                warp::path!("ws")
-                    .and(warp::ws())
-                    .map(move |ws: warp::ws::Ws| {
-                        let gf = gf.clone();
+                warp::path!("ws").and(warp::ws()).map(move |ws: warp::ws::Ws| {
+                    let gf = gf.clone();
 
-                        ws.on_upgrade(move |websocket| {
-                            GrainfatherWebSocketHandler::run(gf, websocket)
-                        })
-                    })
+                    ws.on_upgrade(move |websocket| GrainfatherWebSocketHandler::run(gf, websocket))
+                })
             };
 
             let command = {
                 let gf = gf.clone();
 
-                warp::path!("command")
-                    .and(warp::post())
-                    .and(warp::body::json())
-                    .and_then(move |command: GrainfatherCommand| {
+                warp::path!("command").and(warp::post()).and(warp::body::json()).and_then(
+                    move |command: GrainfatherCommand| {
                         let gf = gf.clone();
 
                         async move {
@@ -137,35 +126,31 @@ pub async fn main() {
                             if let Some(client) = &*guard {
                                 client.command(&command).unwrap();
                                 Ok(warp::reply::json(&GrainfatherResponse {}))
-                            }
-                            else {
+                            } else {
                                 Err(warp::reject::not_found())
                             }
                         }
-                    })
+                    },
+                )
             };
 
             let recipe = {
                 let gf = gf.clone();
 
-                warp::path!("recipe")
-                    .and(warp::post())
-                    .and(warp::body::json())
-                    .and_then(move |recipe: Recipe| {
-                        let gf = gf.clone();
+                warp::path!("recipe").and(warp::post()).and(warp::body::json()).and_then(move |recipe: Recipe| {
+                    let gf = gf.clone();
 
-                        async move {
-                            let guard = gf.read().unwrap();
+                    async move {
+                        let guard = gf.read().unwrap();
 
-                            if let Some(client) = &*guard {
-                                client.send_recipe(&recipe).unwrap();
-                                Ok(warp::reply::json(&GrainfatherResponse {}))
-                            }
-                            else {
-                                Err(warp::reject::not_found())
-                            }
+                        if let Some(client) = &*guard {
+                            client.send_recipe(&recipe).unwrap();
+                            Ok(warp::reply::json(&GrainfatherResponse {}))
+                        } else {
+                            Err(warp::reject::not_found())
                         }
-                    })
+                    }
+                })
             };
 
             warp::path("gf").and(command.or(recipe).or(ws))
@@ -174,35 +159,29 @@ pub async fn main() {
         let tilt_route = {
             let tilts = tilts.clone();
 
-            warp::path!("tilt" / TiltColorParam)
-                .and_then(move |color: TiltColorParam| {
-                    let tilts = tilts.clone();
+            warp::path!("tilt" / TiltColorParam).and_then(move |color: TiltColorParam| {
+                let tilts = tilts.clone();
 
-                    async move {
-                        if let Some(info) = tilts.read().unwrap().get(color.color()) {
-                            Ok(warp::reply::json(&TiltStatus {
-                                centi_celsius: ((i32::from(info.device.fahrenheit) - 32) * 500) / 9,
-                            }))
-                        }
-                        else {
-                            Err(warp::reject::not_found())
-                        }
+                async move {
+                    if let Some(info) = tilts.read().unwrap().get(color.color()) {
+                        Ok(warp::reply::json(&TiltStatus {
+                            centi_celsius: ((i32::from(info.device.fahrenheit) - 32) * 500) / 9,
+                        }))
+                    } else {
+                        Err(warp::reject::not_found())
                     }
-                })
+                }
+            })
         };
 
-        web_content
-            .or(tilt_route)
-            .or(gf_route)
+        web_content.or(tilt_route).or(gf_route)
     };
 
     let web = warp::serve(routes).run(([0, 0, 0, 0], 30080));
 
     let (discovery_sender, discovery_receiver) = mpsc::channel();
 
-    let disco = tokio::spawn(async move {
-        BluetoothDiscovery::run(discovery_sender).await.unwrap()
-    });
+    let disco = tokio::spawn(async move { BluetoothDiscovery::run(discovery_sender).await.unwrap() });
 
     let disco_processor = tokio::spawn(async move {
         loop {
@@ -214,7 +193,7 @@ pub async fn main() {
                     println!(
                         "at={:?} which={:?} celsius={:?} gravity={:?}",
                         now, tilt.color, centi_celsius, tilt.gravity
-                        );
+                    );
 
                     tilts.write().unwrap().insert(tilt.color, DeviceInfo::new(now, tilt));
                 }

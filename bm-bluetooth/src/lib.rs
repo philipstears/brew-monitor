@@ -11,7 +11,7 @@ impl<'a> From<&'a [u8]> for EIRData<'a> {
     }
 }
 
-impl<'a> IntoIterator for EIRData<'a> {
+impl<'a> IntoIterator for &EIRData<'a> {
     type Item = EIREntry;
     type IntoIter = EIRDataIter<'a>;
 

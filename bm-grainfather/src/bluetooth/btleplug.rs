@@ -1,11 +1,13 @@
-use bm_grainfather::bluetooth::*;
-use bm_grainfather::proto::*;
-use bm_grainfather::proto::command::*;
-use bm_grainfather::proto::recipe::*;
-use bm_grainfather::proto::notification::*;
+use crate::bluetooth::*;
+use crate::proto::command::*;
+use crate::proto::notification::*;
+use crate::proto::recipe::*;
+use crate::proto::*;
 
-use btleplug::api::{Characteristic, Peripheral, UUID};
-use btleplug::Error;
+use ::btleplug::{
+    api::{Characteristic, NotificationHandler as BtlePlugNotificationHandler, Peripheral, UUID},
+    Error, Result as BtlePlugResult,
+};
 
 use std::{
     convert::TryFrom,
@@ -22,17 +24,17 @@ pub enum GrainfatherClientError {
     ReadCharacteristic,
 }
 
-pub trait GrainfatherClientImpl: Send + Sync + std::fmt::Debug {
+trait GrainfatherClientImpl: Send + Sync + std::fmt::Debug {
     fn is_connected(&self) -> bool;
-    fn connect(&self) -> btleplug::Result<()>;
-    fn command(&self, characteristic: &Characteristic, data: &[u8]) -> btleplug::Result<()>;
-    fn discover_characteristics(&self) -> btleplug::Result<Vec<Characteristic>>;
-    fn on_notification(&self, handler: btleplug::api::NotificationHandler);
-    fn subscribe(&self, characteristic: &Characteristic) -> btleplug::Result<()>;
+    fn connect(&self) -> BtlePlugResult<()>;
+    fn command(&self, characteristic: &Characteristic, data: &[u8]) -> BtlePlugResult<()>;
+    fn discover_characteristics(&self) -> BtlePlugResult<Vec<Characteristic>>;
+    fn on_notification(&self, handler: BtlePlugNotificationHandler);
+    fn subscribe(&self, characteristic: &Characteristic) -> BtlePlugResult<()>;
 }
 
 #[derive(Debug)]
-pub struct BtleplugGrainfatherClientImpl<P>
+struct BtleplugGrainfatherClientImpl<P>
 where
     P: Peripheral,
 {
@@ -58,23 +60,23 @@ where
         self.p.is_connected()
     }
 
-    fn connect(&self) -> btleplug::Result<()> {
+    fn connect(&self) -> BtlePlugResult<()> {
         self.p.connect()
     }
 
-    fn command(&self, characteristic: &Characteristic, data: &[u8]) -> btleplug::Result<()> {
+    fn command(&self, characteristic: &Characteristic, data: &[u8]) -> BtlePlugResult<()> {
         self.p.command(characteristic, data)
     }
 
-    fn discover_characteristics(&self) -> btleplug::Result<Vec<Characteristic>> {
+    fn discover_characteristics(&self) -> BtlePlugResult<Vec<Characteristic>> {
         self.p.discover_characteristics()
     }
 
-    fn on_notification(&self, handler: btleplug::api::NotificationHandler) {
+    fn on_notification(&self, handler: BtlePlugNotificationHandler) {
         self.p.on_notification(handler)
     }
 
-    fn subscribe(&self, characteristic: &Characteristic) -> btleplug::Result<()> {
+    fn subscribe(&self, characteristic: &Characteristic) -> BtlePlugResult<()> {
         self.p.subscribe(characteristic)
     }
 }
@@ -113,7 +115,12 @@ pub struct GrainfatherClient {
 }
 
 impl GrainfatherClient {
-    pub fn try_from(gf: Box<dyn GrainfatherClientImpl>) -> Result<Self, GrainfatherClientError> {
+    pub fn try_from<P>(peripheral: P) -> Result<Self, GrainfatherClientError>
+    where
+        P: Peripheral + 'static,
+    {
+        let gf = Box::new(BtleplugGrainfatherClientImpl::new(peripheral));
+
         if !gf.is_connected() {
             gf.connect().map_err(GrainfatherClientError::Connect)?
         }

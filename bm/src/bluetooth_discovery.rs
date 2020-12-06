@@ -1,49 +1,39 @@
-use crate::{GrainfatherClient, BtleplugGrainfatherClientImpl, };
-
-use std::{
-    error::Error,
-    sync::mpsc::{Sender},
-    convert::{TryFrom}
-};
+use std::{convert::TryFrom, error::Error, sync::mpsc::Sender};
 
 use bm_bluetooth::*;
-use bm_grainfather::bluetooth::*;
+use bm_grainfather::bluetooth as gf_bluetooth;
+use bm_grainfather::bluetooth::btleplug::GrainfatherClient;
 use bm_tilt::*;
 
+use ::btleplug::api::{Central, Peripheral};
 use async_std::task::block_on;
 use bluez::{
     client::*,
     interface::{controller::*, event::Event},
 };
-use btleplug::{
-    api::{Central, Peripheral},
-};
 
 #[cfg(target_os = "linux")]
-use btleplug::bluez::{adapter::ConnectedAdapter as CentralImpl, manager::Manager};
+use ::btleplug::bluez::{adapter::ConnectedAdapter as CentralImpl, manager::Manager};
 
 #[cfg(target_os = "windows")]
-use btleplug::winrtble::{adapter::Adapter as CentralImpl, manager::Manager};
+use ::btleplug::winrtble::{adapter::Adapter as CentralImpl, manager::Manager};
 
 #[cfg(target_os = "macos")]
-use btleplug::corebluetooth::{adapter::Adapter as CentralImpl, manager::Manager};
+use ::btleplug::corebluetooth::{adapter::Adapter as CentralImpl, manager::Manager};
 
-pub enum BluetoothDiscoveryEvent
-{
+pub enum BluetoothDiscoveryEvent {
     DiscoveredTilt(Tilt),
     DiscoveredGrainfather(GrainfatherClient),
 }
 
-pub struct BluetoothDiscovery<'z>
-{
+pub struct BluetoothDiscovery<'z> {
     sender: Sender<BluetoothDiscoveryEvent>,
     bluez_client: BlueZClient<'z>,
     bluez_controller: Controller,
-    btle_central: CentralImpl
+    btle_central: CentralImpl,
 }
 
-impl<'z> BluetoothDiscovery<'z>
-{
+impl<'z> BluetoothDiscovery<'z> {
     pub async fn run(sender: Sender<BluetoothDiscoveryEvent>) -> Result<(), Box<dyn Error>> {
         let mut bluez_client = BlueZClient::new().unwrap();
 
@@ -70,8 +60,11 @@ impl<'z> BluetoothDiscovery<'z>
 
         let btle_manager = Manager::new().unwrap();
         let btle_adapters = btle_manager.adapters().unwrap();
-        let btle_adapter =
-            btle_adapters.into_iter().filter(|adapter| adapter.addr.address == bluez_info.address.as_ref()).nth(0).unwrap();
+        let btle_adapter = btle_adapters
+            .into_iter()
+            .filter(|adapter| adapter.addr.address == bluez_info.address.as_ref())
+            .nth(0)
+            .unwrap();
         let btle_central = btle_adapter.connect().unwrap();
 
         let state = Self {
@@ -111,17 +104,15 @@ impl<'z> BluetoothDiscovery<'z>
                     eir_data,
                     ..
                 } => {
-                    let report1 = EIRData::from(eir_data.as_ref());
-                    let report2 = EIRData::from(eir_data.as_ref());
+                    let report = EIRData::from(eir_data.as_ref());
 
-                    if let Ok(tilt) = Tilt::try_from(report1) {
+                    if let Ok(tilt) = Tilt::try_from(&report) {
                         self.sender.send(BluetoothDiscoveryEvent::DiscoveredTilt(tilt)).unwrap();
-                    }
-                    else if let Ok(_gf_info) = Grainfather::try_from(report2) {
-
+                    } else if gf_bluetooth::has_grainfather_service_id(&report) {
                         println!("Found a grainfather with address {}", address);
 
-                        let gf_peripheral = self.btle_central
+                        let gf_peripheral = self
+                            .btle_central
                             .peripherals()
                             .into_iter()
                             .find(|p| p.address().address == address.as_ref())
@@ -129,8 +120,7 @@ impl<'z> BluetoothDiscovery<'z>
 
                         println!("Found the grainfather peripheral with address {}", address);
 
-                        let gf = BtleplugGrainfatherClientImpl::new(gf_peripheral);
-                        let gf = GrainfatherClient::try_from(Box::new(gf)).unwrap();
+                        let gf = GrainfatherClient::try_from(gf_peripheral).unwrap();
 
                         println!("Connecting to the grainfather peripheral with address {}", address);
 
@@ -153,7 +143,7 @@ impl<'z> BluetoothDiscovery<'z>
                 AddressTypeFlag::LEPublic | AddressTypeFlag::LERandom,
                 TX_LEVEL,
                 vec![],
-                )
+            )
             .await?;
 
         Ok(())
