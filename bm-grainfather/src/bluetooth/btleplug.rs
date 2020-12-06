@@ -1,7 +1,4 @@
 use crate::bluetooth::*;
-use crate::proto::command::*;
-use crate::proto::notification::*;
-use crate::proto::recipe::*;
 use crate::proto::*;
 
 use ::btleplug::{
@@ -14,17 +11,17 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-type NotificationHandler = Box<dyn FnMut(GrainfatherNotification) + Send>;
+type NotificationHandler = Box<dyn FnMut(Notification) + Send>;
 
 #[derive(Debug)]
-pub enum GrainfatherClientError {
+pub enum ClientError {
     Connect(Error),
     DiscoverCharacteristics(Error),
     WriteCharacteristic,
     ReadCharacteristic,
 }
 
-trait GrainfatherClientImpl: Send + Sync + std::fmt::Debug {
+trait ClientImpl: Send + Sync + std::fmt::Debug {
     fn is_connected(&self) -> bool;
     fn connect(&self) -> BtlePlugResult<()>;
     fn command(&self, characteristic: &Characteristic, data: &[u8]) -> BtlePlugResult<()>;
@@ -34,14 +31,14 @@ trait GrainfatherClientImpl: Send + Sync + std::fmt::Debug {
 }
 
 #[derive(Debug)]
-struct BtleplugGrainfatherClientImpl<P>
+struct BtleplugClientImpl<P>
 where
     P: Peripheral,
 {
     p: P,
 }
 
-impl<P> BtleplugGrainfatherClientImpl<P>
+impl<P> BtleplugClientImpl<P>
 where
     P: Peripheral,
 {
@@ -52,7 +49,7 @@ where
     }
 }
 
-impl<P> GrainfatherClientImpl for BtleplugGrainfatherClientImpl<P>
+impl<P> ClientImpl for BtleplugClientImpl<P>
 where
     P: Peripheral,
 {
@@ -82,7 +79,7 @@ where
 }
 
 #[derive(Debug, Default)]
-struct GrainfatherState {
+struct State {
     // Status 1
     heat_active: bool,
     pump_active: bool,
@@ -107,33 +104,33 @@ struct GrainfatherState {
 }
 
 #[derive(Debug)]
-pub struct GrainfatherClient {
-    gf: Box<dyn GrainfatherClientImpl>,
+pub struct Client {
+    gf: Box<dyn ClientImpl>,
     read: Characteristic,
     write: Characteristic,
-    state: Arc<RwLock<GrainfatherState>>,
+    state: Arc<RwLock<State>>,
 }
 
-impl GrainfatherClient {
-    pub fn try_from<P>(peripheral: P) -> Result<Self, GrainfatherClientError>
+impl Client {
+    pub fn try_from<P>(peripheral: P) -> Result<Self, ClientError>
     where
         P: Peripheral + 'static,
     {
-        let gf = Box::new(BtleplugGrainfatherClientImpl::new(peripheral));
+        let gf = Box::new(BtleplugClientImpl::new(peripheral));
 
         if !gf.is_connected() {
-            gf.connect().map_err(GrainfatherClientError::Connect)?
+            gf.connect().map_err(ClientError::Connect)?
         }
 
-        let cs = gf.discover_characteristics().map_err(GrainfatherClientError::DiscoverCharacteristics)?;
+        let cs = gf.discover_characteristics().map_err(ClientError::DiscoverCharacteristics)?;
 
         let rc_id = UUID::B128(CHARACTERISTIC_ID_READ.to_le_bytes());
-        let rc = cs.iter().find(|c| c.uuid == rc_id).ok_or(GrainfatherClientError::ReadCharacteristic)?;
+        let rc = cs.iter().find(|c| c.uuid == rc_id).ok_or(ClientError::ReadCharacteristic)?;
 
         let wc_id = UUID::B128(CHARACTERISTIC_ID_WRITE.to_le_bytes());
-        let wc = cs.iter().find(|c| c.uuid == wc_id).ok_or(GrainfatherClientError::WriteCharacteristic)?;
+        let wc = cs.iter().find(|c| c.uuid == wc_id).ok_or(ClientError::WriteCharacteristic)?;
 
-        let state = Arc::new(RwLock::new(GrainfatherState::default()));
+        let state = Arc::new(RwLock::new(State::default()));
 
         let result = Self {
             gf,
@@ -144,7 +141,7 @@ impl GrainfatherClient {
 
         result
             .subscribe(Box::new(move |notification| match notification {
-                GrainfatherNotification::Status1 {
+                Notification::Status1 {
                     heat_active,
                     pump_active,
                     auto_mode_active,
@@ -173,7 +170,7 @@ impl GrainfatherClient {
                         &delayed_heat_mode_active,
                     );
                 }
-                GrainfatherNotification::Status2 {
+                Notification::Status2 {
                     heat_power_output_percentage,
                     timer_paused,
                     step_mash_mode,
@@ -198,7 +195,7 @@ impl GrainfatherClient {
                         &sparge_water_alert_displayed,
                     );
                 }
-                GrainfatherNotification::Temp {
+                Notification::Temp {
                     desired,
                     current,
                 } => {
@@ -209,14 +206,14 @@ impl GrainfatherClient {
                     state.temp_desired = (desired * 100.0) as i32;
                     state.temp_current = (current * 100.0) as i32;
                 }
-                GrainfatherNotification::DelayedHeatTimer {
+                Notification::DelayedHeatTimer {
                     active,
                     ..
                 } => {
                     let mut state = state.write().unwrap();
                     maybe_update("timer_active", &mut state.timer_active, &active);
                 }
-                GrainfatherNotification::Interaction {
+                Notification::Interaction {
                     interaction_code,
                 } => {
                     println!("[R]: interaction with code {:?}", interaction_code);
@@ -230,7 +227,7 @@ impl GrainfatherClient {
         Ok(result)
     }
 
-    pub fn command(&self, command: &GrainfatherCommand) -> Result<(), Error> {
+    pub fn command(&self, command: &Command) -> Result<(), Error> {
         println!("[S]: {:?}", command);
         self.gf.command(&self.write, command.to_vec().as_ref())
     }
@@ -258,7 +255,7 @@ impl GrainfatherClient {
 
             for notification in gf_notification_buf.drain(..notifications_len).as_slice().chunks_exact(NOTIFICATION_LEN)
             {
-                let notification = GrainfatherNotification::try_from(notification).unwrap();
+                let notification = Notification::try_from(notification).unwrap();
                 handler(notification);
             }
         }));

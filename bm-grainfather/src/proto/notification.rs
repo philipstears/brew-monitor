@@ -16,7 +16,7 @@ pub enum Units {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
-pub enum GrainfatherNotification {
+pub enum Notification {
     Temp {
         desired: f64,
         current: f64,
@@ -68,12 +68,12 @@ pub enum GrainfatherNotification {
 }
 
 #[derive(Debug)]
-pub enum GrainfatherNotificationConvertError {
+pub enum NotificationConvertError {
     InvalidUtf8(std::str::Utf8Error),
 }
 
-impl TryFrom<&[u8]> for GrainfatherNotification {
-    type Error = GrainfatherNotificationConvertError;
+impl TryFrom<&[u8]> for Notification {
+    type Error = NotificationConvertError;
 
     fn try_from(message: &[u8]) -> Result<Self, Self::Error> {
         let ndata = std::str::from_utf8(message).map_err(Self::Error::InvalidUtf8)?;

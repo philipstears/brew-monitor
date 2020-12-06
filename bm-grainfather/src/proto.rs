@@ -1,8 +1,13 @@
 use std::{convert::TryFrom, str::FromStr};
 
-pub mod command;
-pub mod notification;
-pub mod recipe;
+mod command;
+pub use command::*;
+
+mod notification;
+pub use notification::*;
+
+mod recipe;
+pub use recipe::*;
 
 // NOTE: this is sometimes a number,
 // and othertimes not. For example,

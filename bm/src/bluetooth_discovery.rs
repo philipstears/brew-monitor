@@ -1,8 +1,8 @@
 use std::{convert::TryFrom, error::Error, sync::mpsc::Sender};
 
 use bm_bluetooth::*;
-use bm_grainfather::bluetooth as gf_bluetooth;
-use bm_grainfather::bluetooth::btleplug::GrainfatherClient;
+use bm_grainfather;
+use bm_grainfather::btleplug::Client as GrainfatherClient;
 use bm_tilt::*;
 
 use ::btleplug::api::{Central, Peripheral};
@@ -108,7 +108,7 @@ impl<'z> BluetoothDiscovery<'z> {
 
                     if let Ok(tilt) = Tilt::try_from(&report) {
                         self.sender.send(BluetoothDiscoveryEvent::DiscoveredTilt(tilt)).unwrap();
-                    } else if gf_bluetooth::has_grainfather_service_id(&report) {
+                    } else if bm_grainfather::has_grainfather_service_id(&report) {
                         println!("Found a grainfather with address {}", address);
 
                         let gf_peripheral = self

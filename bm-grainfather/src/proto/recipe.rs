@@ -1,4 +1,4 @@
-use super::command::{COMMAND_LEN, finish_command, GrainfatherCommand};
+use super::command::{finish_command, Command, COMMAND_LEN};
 use std::fmt::Write;
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -77,7 +77,7 @@ impl Recipe {
         // TODO: this can be computed
         let mut commands = Vec::with_capacity(10);
 
-        commands.push(GrainfatherCommand::SetLocalBoilTemperature(self.boil_temperature).to_vec());
+        commands.push(Command::SetLocalBoilTemperature(self.boil_temperature).to_vec());
 
         commands.push({
             let mut command = String::with_capacity(COMMAND_LEN);

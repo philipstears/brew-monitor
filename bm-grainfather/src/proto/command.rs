@@ -20,7 +20,7 @@ pub enum DisconnectOption {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
-pub enum GrainfatherCommand {
+pub enum Command {
     Reset,
     GetFirmwareVersion,
     GetVoltageAndUnits,
@@ -84,7 +84,7 @@ pub enum GrainfatherCommand {
     SetSpargeAlertModeActive(bool),
 }
 
-impl GrainfatherCommand {
+impl Command {
     pub fn to_vec(&self) -> Vec<u8> {
         let mut output = String::with_capacity(COMMAND_LEN);
 

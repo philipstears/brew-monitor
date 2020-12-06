@@ -1,9 +1,7 @@
 mod bluetooth_discovery;
 pub use bluetooth_discovery::*;
 
-use bm_grainfather::bluetooth::btleplug::*;
-use bm_grainfather::proto::command::*;
-use bm_grainfather::proto::recipe::*;
+use bm_grainfather::{self as gf, btleplug::Client as GrainfatherClient};
 
 use bm_tilt::*;
 
@@ -117,7 +115,7 @@ pub async fn main() {
                 let gf = gf.clone();
 
                 warp::path!("command").and(warp::post()).and(warp::body::json()).and_then(
-                    move |command: GrainfatherCommand| {
+                    move |command: gf::Command| {
                         let gf = gf.clone();
 
                         async move {
@@ -137,7 +135,7 @@ pub async fn main() {
             let recipe = {
                 let gf = gf.clone();
 
-                warp::path!("recipe").and(warp::post()).and(warp::body::json()).and_then(move |recipe: Recipe| {
+                warp::path!("recipe").and(warp::post()).and(warp::body::json()).and_then(move |recipe: gf::Recipe| {
                     let gf = gf.clone();
 
                     async move {
