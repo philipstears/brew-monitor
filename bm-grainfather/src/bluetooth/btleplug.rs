@@ -1,5 +1,5 @@
 use crate::bluetooth::*;
-use crate::proto::*;
+use crate::{notifications::*, Command, InteractionCode, Notification, Recipe, StepNumber};
 
 use ::btleplug::{
     api::{Characteristic, NotificationHandler as BtlePlugNotificationHandler, Peripheral, UUID},
@@ -141,7 +141,7 @@ impl Client {
 
         result
             .subscribe(Box::new(move |notification| match notification {
-                Notification::Status1 {
+                Notification::Status1(Status1 {
                     heat_active,
                     pump_active,
                     auto_mode_active,
@@ -150,7 +150,7 @@ impl Client {
                     interaction_code,
                     step_number,
                     delayed_heat_mode_active,
-                } => {
+                }) => {
                     let mut state = state.write().unwrap();
 
                     maybe_update("heat_active", &mut state.heat_active, &heat_active);
@@ -170,14 +170,14 @@ impl Client {
                         &delayed_heat_mode_active,
                     );
                 }
-                Notification::Status2 {
+                Notification::Status2(Status2 {
                     heat_power_output_percentage,
                     timer_paused,
                     step_mash_mode,
                     recipe_interrupted,
                     manual_power_mode,
                     sparge_water_alert_displayed,
-                } => {
+                }) => {
                     let mut state = state.write().unwrap();
 
                     maybe_update(
@@ -195,10 +195,10 @@ impl Client {
                         &sparge_water_alert_displayed,
                     );
                 }
-                Notification::Temp {
+                Notification::Temp(Temp {
                     desired,
                     current,
-                } => {
+                }) => {
                     let mut state = state.write().unwrap();
 
                     // These frequently fluctuate by 0.1 of a degree, which is
@@ -206,16 +206,16 @@ impl Client {
                     state.temp_desired = (desired * 100.0) as i32;
                     state.temp_current = (current * 100.0) as i32;
                 }
-                Notification::DelayedHeatTimer {
+                Notification::DelayedHeatTimer(Timer {
                     active,
                     ..
-                } => {
+                }) => {
                     let mut state = state.write().unwrap();
                     maybe_update("timer_active", &mut state.timer_active, &active);
                 }
-                Notification::Interaction {
+                Notification::Interaction(Interaction {
                     interaction_code,
-                } => {
+                }) => {
                     println!("[R]: interaction with code {:?}", interaction_code);
                 }
                 other => {
