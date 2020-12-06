@@ -1,3 +1,5 @@
+//! Provides a client to make it easy to work with a Grainfather controller.
+
 use crate::bluetooth::*;
 use crate::{notifications::*, Command, InteractionCode, Notification, Recipe, StepNumber};
 

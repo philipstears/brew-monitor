@@ -9,12 +9,17 @@ pub enum Delay {
     MinutesSeconds(u32, u8),
 }
 
-// TODO: what do these mean??
+/// Indicates the type of disconnection to perform.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum DisconnectOption {
+    /// Disconnects the controller, canceling the session (recipe) if one is active.
     ManualMode,
+
+    /// Cancels the session (recipe), but leaves the controller connected.
     CancelSession,
+
+    /// Disconnects the controller, and leaves it running in automatic (recipe) mode.
     AutomaticMode,
 }
 

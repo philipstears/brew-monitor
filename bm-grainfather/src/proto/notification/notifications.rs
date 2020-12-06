@@ -1,3 +1,5 @@
+//! Data types for specific notifications.
+
 use crate::{InteractionCode, StepNumber, Units, Voltage};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
