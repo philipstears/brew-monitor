@@ -3,6 +3,7 @@ use notifications::*;
 
 use super::*;
 
+/// Represents the Grainfather controller's supported power supply.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum Voltage {
@@ -10,6 +11,10 @@ pub enum Voltage {
     V230,
 }
 
+/// Represents the temperature units in use by the Grainfather for display.
+///
+/// Note that the units used in commands, notifications, and recipes always use
+/// degrees celsius.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum Units {
@@ -17,20 +22,46 @@ pub enum Units {
     Celsius,
 }
 
+/// Represents a notification received asynchronously from the Grainfather controller.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum Notification {
+    /// Indicates the current and target temperature measured by the controller.
     Temp(Temp),
+
+    /// Indicates the status of the active timer on the controller.
     DelayedHeatTimer(Timer),
+
+    /// Provides a collection of related status information - this is the
+    /// controller's "Y" status report.
     Status1(Status1),
+
+    /// Provides a collection of related status information - this is the
+    /// controller's "W" status report.
     Status2(Status2),
+
     TemperatureReached(TemperatureReached),
+
+    /// Indicates that the controller has prompted to add a boil addition.
     PromptBoilAddition(PromptBoilAddition),
+
+    /// Indicates that the controller has prompted to heat the sparge water.
     PromptSpargeWater(PromptSpargeWater),
+
+    /// Indicates that the controller has prompted an interaction and is awaiting
+    /// the user to confirm.
     Interaction(Interaction),
+
+    /// Provides a response to the [GetBoilTemperature](crate::Command::GetBoilTemperature) command.
     Boil(Boil),
+
+    /// Provides a response to the [GetVoltageAndUnits](crate::Command::GetVoltageAndUnits) command.
     VoltageAndUnits(VoltageAndUnits),
+
+    /// Provides a response to the [GetFirmwareVersion](crate::Command::GetFirmwareVersion) command.
     FirmwareVersion(FirmwareVersion),
+
+    /// Represents an unknown notification from the controller.
     Other(Other),
 }
 

@@ -22,8 +22,17 @@ pub enum DisconnectOption {
 #[serde(tag = "type", content = "data")]
 pub enum Command {
     Reset,
+
+    /// Requests the firmware version from the controller, the response is returned in a
+    /// [FirmwareVersion](crate::Notification::FirmwareVersion) notification.
     GetFirmwareVersion,
+
+    /// Requests the voltage and temperature units from the controller, the response is returned in a
+    /// [VoltageAndUnits](crate::Notification::VoltageAndUnits) notification.
     GetVoltageAndUnits,
+
+    /// Requests the active boil temperature from the controller, the response is returned in a
+    /// [Boil](crate::Notification::Boil) notification.
     GetBoilTemperature,
 
     ToggleHeatActive,
