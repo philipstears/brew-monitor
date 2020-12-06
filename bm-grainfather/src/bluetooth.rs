@@ -1,3 +1,4 @@
+#[cfg(feature = "btleplug")]
 pub mod btleplug;
 
 use bm_bluetooth::*;
