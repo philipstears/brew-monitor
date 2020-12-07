@@ -15,9 +15,10 @@
 //! Report returned by a bluetooth library.
 //!
 //! Finally, there's a `btleplug` feature (turned on by default), which makes
-//! a [client](crate::btleplug::Client) available which wraps a `btleplug::api::Peripheral`
-//! and exposes an API for interacting with the Grainfather Controller in terms
-//! of commands, notifications, and recipes.
+//! a [client](crate::btleplug::Client) available which wraps a
+//! [`btleplug::api::Peripheral`](::btleplug::api::Peripheral) and exposes
+//! an API for interacting with the Grainfather Controller in terms of commands,
+//! notifications, and recipes.
 
 // TODO: review temperature units
 pub mod calc;

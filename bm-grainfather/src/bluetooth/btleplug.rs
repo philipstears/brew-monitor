@@ -15,11 +15,16 @@ use std::{
 
 type NotificationHandler = Box<dyn FnMut(Notification) + Send>;
 
+/// Possible errors encountered during the construction of a client.
 #[derive(Debug)]
 pub enum ClientError {
+    /// The peripheral isn't connected, and failed to connect.
     Connect(Error),
+    /// The characteristics of the peripheral could not be discovered.
     DiscoverCharacteristics(Error),
+    /// The write characteristic (used for issuing commands) could not be found.
     WriteCharacteristic,
+    /// The read characteristic (used for receiving notifications) could not be found.
     ReadCharacteristic,
 }
 
@@ -114,6 +119,11 @@ pub struct Client {
 }
 
 impl Client {
+    /// Tries to construct a client from the given [`btleplug::api::Peripheral`](::btleplug::api::Peripheral). This
+    /// will connect the peripheral if it isn't already connected.
+    ///
+    /// This will fail if the peripheral isn't connected and can't be connected, and if the
+    /// peripheral doesn't support the necessary read/write characteristics.
     pub fn try_from<P>(peripheral: P) -> Result<Self, ClientError>
     where
         P: Peripheral + 'static,
@@ -229,11 +239,13 @@ impl Client {
         Ok(result)
     }
 
+    /// Despatches a command to the grainfather controller.
     pub fn command(&self, command: &Command) -> Result<(), Error> {
         println!("[S]: {:?}", command);
         self.gf.command(&self.write, command.to_vec().as_ref())
     }
 
+    /// Sends a recipe to the to the grainfather controller.
     pub fn send_recipe(&self, recipe: &Recipe) -> Result<(), Error> {
         println!("[S]: Recipe with name {}", recipe.name);
 
@@ -244,6 +256,7 @@ impl Client {
         Ok(())
     }
 
+    /// Subscribes to notifications issued by the grainfather controller.
     pub fn subscribe(&self, mut handler: NotificationHandler) -> Result<(), Error> {
         const NOTIFICATION_LEN: usize = 17;
         const NOTIFICATION_BUF_COUNT: usize = NOTIFICATION_LEN * 8;
