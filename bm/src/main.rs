@@ -1,6 +1,7 @@
 mod bluetooth_discovery;
 pub use bluetooth_discovery::*;
 
+mod devices;
 mod web;
 
 use bm_grainfather::btleplug::Client as GrainfatherClient;
