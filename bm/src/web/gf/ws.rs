@@ -1,28 +1,14 @@
-use bm_grainfather::btleplug::Client as GrainfatherClient;
+use crate::devices::gf_manager::GrainfatherManager;
 use futures::{SinkExt, StreamExt};
-use std::sync::{mpsc, Arc, RwLock};
 use warp::ws::WebSocket;
 
 pub struct GrainfatherWebSocketHandler {}
 
 impl GrainfatherWebSocketHandler {
-    pub async fn run(gf: Arc<RwLock<Option<GrainfatherClient>>>, ws: WebSocket) {
+    pub async fn run(mut gf: GrainfatherManager, ws: WebSocket) {
         let (mut ws_tx, _ws_rx) = ws.split();
-        let (gf_tx, gf_rx) = mpsc::channel();
 
-        {
-            let guard = gf.read().unwrap();
-
-            if let Some(client) = &*guard {
-                client
-                    .subscribe(Box::new(move |notification| {
-                        if let Err(e) = gf_tx.send(notification) {
-                            //
-                        }
-                    }))
-                    .unwrap();
-            }
-        }
+        let gf_rx = gf.subscribe();
 
         loop {
             let notification = gf_rx.recv().unwrap();

@@ -4,7 +4,7 @@ use notifications::*;
 use super::*;
 
 /// Represents the Grainfather controller's supported power supply.
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum Voltage {
     V110,
@@ -15,7 +15,7 @@ pub enum Voltage {
 ///
 /// Note that the units used in commands, notifications, and recipes always use
 /// degrees celsius.
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum Units {
     Fahrenheit,
@@ -23,7 +23,7 @@ pub enum Units {
 }
 
 /// Represents a notification received asynchronously from the Grainfather controller.
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum Notification {
     /// Indicates the current and target temperature measured by the controller.

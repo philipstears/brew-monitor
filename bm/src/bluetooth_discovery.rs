@@ -111,12 +111,11 @@ impl<'z> BluetoothDiscovery<'z> {
                     } else if bm_grainfather::has_grainfather_service_id(&report) {
                         println!("Found a grainfather with address {}", address);
 
-                        let gf_peripheral = self
-                            .btle_central
-                            .peripherals()
-                            .into_iter()
-                            .find(|p| p.address().address == address.as_ref())
-                            .unwrap();
+                        let btle_address = btleplug::api::BDAddr {
+                            address: address.into(),
+                        };
+
+                        let gf_peripheral = self.btle_central.peripheral(btle_address).unwrap();
 
                         println!("Found the grainfather peripheral with address {}", address);
 

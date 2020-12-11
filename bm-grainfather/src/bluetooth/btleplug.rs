@@ -13,7 +13,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-type NotificationHandler = Box<dyn FnMut(Notification) + Send>;
+pub type NotificationHandler = Box<dyn FnMut(Notification) + Send>;
 
 /// Possible errors encountered during the construction of a client.
 #[derive(Debug)]
@@ -237,6 +237,11 @@ impl Client {
             .unwrap();
 
         Ok(result)
+    }
+
+    /// Determines whether the client is connected.
+    pub fn is_connected(&self) -> bool {
+        self.gf.is_connected()
     }
 
     /// Despatches a command to the grainfather controller.

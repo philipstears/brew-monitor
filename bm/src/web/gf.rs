@@ -1,13 +1,12 @@
 mod ws;
 use ws::GrainfatherWebSocketHandler;
 
-use bm_grainfather::{self as gf, btleplug::Client as GrainfatherClient};
-use std::sync::{Arc, RwLock};
+use crate::devices::gf_manager::GrainfatherManager;
+
+use bm_grainfather::{self as gf};
 use warp::{reject::Rejection, reply::Reply, ws::Ws, Filter};
 
-pub fn route(
-    gf: Arc<RwLock<Option<GrainfatherClient>>>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+pub fn route(gf: GrainfatherManager) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let ws = {
         let gf = gf.clone();
 
@@ -25,14 +24,9 @@ pub fn route(
             let gf = gf.clone();
 
             async move {
-                let guard = gf.read().unwrap();
-
-                if let Some(client) = &*guard {
-                    client.command(&command).unwrap();
-                    Ok(warp::reply::json(&GrainfatherResponse {}))
-                } else {
-                    Err(warp::reject::not_found())
-                }
+                gf.command(&command)
+                    .map(|()| warp::reply::json(&GrainfatherResponse {}))
+                    .map_err(|error| btleplug_to_warp_error(error))
             }
         })
     };
@@ -44,14 +38,9 @@ pub fn route(
             let gf = gf.clone();
 
             async move {
-                let guard = gf.read().unwrap();
-
-                if let Some(client) = &*guard {
-                    client.send_recipe(&recipe).unwrap();
-                    Ok(warp::reply::json(&GrainfatherResponse {}))
-                } else {
-                    Err(warp::reject::not_found())
-                }
+                gf.send_recipe(&recipe)
+                    .map(|()| warp::reply::json(&GrainfatherResponse {}))
+                    .map_err(|error| btleplug_to_warp_error(error))
             }
         })
     };
@@ -64,3 +53,10 @@ struct GrainfatherRequest {}
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct GrainfatherResponse {}
+
+fn btleplug_to_warp_error(error: btleplug::Error) -> Rejection {
+    match error {
+        btleplug::Error::NotConnected => warp::reject::not_found(),
+        _ => panic!("Unhandled bluetooth error {:?}", error),
+    }
+}

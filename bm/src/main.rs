@@ -2,9 +2,10 @@ mod bluetooth_discovery;
 pub use bluetooth_discovery::*;
 
 mod devices;
+use devices::gf_manager::GrainfatherManager;
+
 mod web;
 
-use bm_grainfather::btleplug::Client as GrainfatherClient;
 use bm_tilt::*;
 use chrono::prelude::*;
 use std::{
@@ -17,7 +18,7 @@ use warp::Filter;
 pub async fn main() {
     let tilts = Arc::new(RwLock::new(HashMap::<TiltColor, DeviceInfo<Tilt>>::new()));
 
-    let gf: Arc<RwLock<Option<GrainfatherClient>>> = Arc::new(RwLock::new(None));
+    let gf = GrainfatherManager::new();
 
     let routes = {
         let web_content = web::assets::route();
@@ -48,15 +49,7 @@ pub async fn main() {
                 }
 
                 BluetoothDiscoveryEvent::DiscoveredGrainfather(gf_client) => {
-                    // gf_client.subscribe(Box::new(|notification| {
-                    //     let now = Utc::now();
-                    //     println!(
-                    //         "at={:?} which=grainfather notification={:?}",
-                    //         now, notification
-                    //         );
-                    // })).unwrap();
-
-                    gf.write().unwrap().replace(gf_client);
+                    gf.set_client(gf_client);
                 }
             }
         }

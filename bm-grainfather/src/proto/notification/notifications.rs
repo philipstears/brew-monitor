@@ -2,13 +2,13 @@
 
 use crate::{InteractionCode, StepNumber, Units, Voltage};
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Temp {
     pub desired: f64,
     pub current: f64,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Timer {
     pub active: bool,
     // If zero, the time is inactive, otherwise, it's always the number of remaining minutes +
@@ -19,7 +19,7 @@ pub struct Timer {
     pub total_start_time: u32,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Status1 {
     pub heat_active: bool,
     pub pump_active: bool,
@@ -31,7 +31,7 @@ pub struct Status1 {
     pub delayed_heat_mode_active: bool,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Status2 {
     pub heat_power_output_percentage: u8,
     pub timer_paused: bool,
@@ -41,37 +41,37 @@ pub struct Status2 {
     pub sparge_water_alert_displayed: bool,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TemperatureReached;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct PromptBoilAddition;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct PromptSpargeWater;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Interaction {
     pub interaction_code: InteractionCode,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Boil {
     pub boil_temperature: f64,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct VoltageAndUnits {
     pub voltage: Voltage,
     pub units: Units,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct FirmwareVersion {
     pub firmware_version: String,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Other {
     pub r#type: char,
     pub data: String,

@@ -2,7 +2,7 @@ use super::*;
 
 pub(crate) const COMMAND_LEN: usize = 19;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum Delay {
     Minutes(u32),
@@ -10,7 +10,7 @@ pub enum Delay {
 }
 
 /// Indicates the type of disconnection to perform.
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum DisconnectOption {
     /// Disconnects the controller, canceling the session (recipe) if one is active.
@@ -23,7 +23,7 @@ pub enum DisconnectOption {
     AutomaticMode,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum Command {
     Reset,

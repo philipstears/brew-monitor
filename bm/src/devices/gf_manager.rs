@@ -1,44 +1,41 @@
 use bm_grainfather::{btleplug::Client as GrainfatherClient, Command, Notification, Recipe};
 use std::sync::{
-    mpsc::{Receiver, Sender},
-    Arc, RwLock, RwLockReadGuard, RwLockWriteGuard,
+    mpsc::{self, Receiver, Sender},
+    Arc, Mutex, MutexGuard,
 };
 
-#[derive(Debug)]
-pub struct NotConnected;
-
 #[derive(Clone)]
-pub struct GrainfatherManager(Arc<RwLock<GrainfatherInternal>>);
+pub struct GrainfatherManager(Arc<Mutex<GrainfatherInternal>>);
 
 impl GrainfatherManager {
     pub fn new() -> Self {
-        Self(Arc::new(RwLock::new(GrainfatherInternal::new())))
+        Self(Arc::new(Mutex::new(GrainfatherInternal::new())))
     }
 
     pub fn set_client(&self, client: GrainfatherClient) {
-        self.write().set_client(client);
+        self.lock().set_client(client);
     }
 
-    pub fn command(&self, command: &Command) -> Result<(), NotConnected> {
-        self.write().command(command)
+    pub fn command(&self, command: &Command) -> Result<(), btleplug::Error> {
+        self.lock().command(command)
     }
 
-    pub fn send_recipe(&self, recipe: &Recipe) -> Result<(), NotConnected> {
-        self.write().send_recipe(recipe)
+    pub fn send_recipe(&self, recipe: &Recipe) -> Result<(), btleplug::Error> {
+        self.lock().send_recipe(recipe)
     }
 
-    fn read(&self) -> RwLockReadGuard<GrainfatherInternal> {
-        self.0.read().expect("The grainfather manager lock has been poisoned")
+    pub fn subscribe(&mut self) -> Receiver<Notification> {
+        self.lock().subscribe()
     }
 
-    fn write(&self) -> RwLockWriteGuard<GrainfatherInternal> {
-        self.0.write().expect("The grainfather manager lock has been poisoned")
+    fn lock(&self) -> MutexGuard<GrainfatherInternal> {
+        self.0.lock().expect("The grainfather manager lock has been poisoned")
     }
 }
 
 struct GrainfatherInternal {
     client: Option<GrainfatherClient>,
-    handlers: Vec<Sender<Notification>>,
+    subscribers: Arc<Mutex<Vec<Sender<Notification>>>>,
 }
 
 impl GrainfatherInternal {
@@ -47,27 +44,44 @@ impl GrainfatherInternal {
     fn new() -> Self {
         Self {
             client: None,
-            handlers: Vec::with_capacity(Self::INITIAL_HANDLER_CAPACITY),
+            subscribers: Arc::new(Mutex::new(Vec::with_capacity(Self::INITIAL_HANDLER_CAPACITY))),
         }
     }
 
     fn set_client(&mut self, client: GrainfatherClient) {
-        client.subscribe(Box::new(|notification| {
-            //
-        }));
+        let have_valid_client = self.client.as_ref().map(|client| client.is_connected()).unwrap_or(false);
 
-        self.client = Some(client);
+        if !have_valid_client {
+            println!("Setting grainfather");
+
+            let subscribers = self.subscribers.clone();
+
+            client
+                .subscribe(Box::new(move |notification| {
+                    subscribers.lock().unwrap().retain(|subscriber| {
+                        let keep_subscriber = subscriber.send(notification.clone()).is_ok();
+                        keep_subscriber
+                    });
+                }))
+                .unwrap();
+
+            self.client = Some(client);
+        }
     }
 
-    pub fn command(&mut self, command: &Command) -> Result<(), NotConnected> {
-        let client = self.client.as_ref().ok_or(NotConnected)?;
-        client.command(command).unwrap();
-        Ok(())
+    pub fn command(&mut self, command: &Command) -> Result<(), btleplug::Error> {
+        let client = self.client.as_ref().ok_or(btleplug::Error::NotConnected)?;
+        client.command(command)
     }
 
-    pub fn send_recipe(&mut self, recipe: &Recipe) -> Result<(), NotConnected> {
-        let client = self.client.as_ref().ok_or(NotConnected)?;
-        client.send_recipe(recipe).unwrap();
-        Ok(())
+    pub fn send_recipe(&mut self, recipe: &Recipe) -> Result<(), btleplug::Error> {
+        let client = self.client.as_ref().ok_or(btleplug::Error::NotConnected)?;
+        client.send_recipe(recipe)
+    }
+
+    pub fn subscribe(&mut self) -> Receiver<Notification> {
+        let (sender, receiver) = mpsc::channel();
+        self.subscribers.lock().unwrap().push(sender);
+        receiver
     }
 }
