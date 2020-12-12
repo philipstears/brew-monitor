@@ -32,6 +32,7 @@ in
       rust
       rustracer
       nodejs
+      sqlite
     ];
 
     RUST_SRC_PATH = "${rust}/lib/rustlib/src/rust/src";
