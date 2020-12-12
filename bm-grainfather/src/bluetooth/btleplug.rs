@@ -137,6 +137,12 @@ impl Client {
     pub fn send_recipe(&self, recipe: &Recipe) -> Result<(), Error> {
         println!("[S]: Recipe with name {}", recipe.name);
 
+        self.gf.command(&self.write, &Command::SetLocalBoilTemperature(recipe.boil_temperature).to_vec())?;
+
+        // Otherwise the controller becomes unresponsive, there's got to be
+        // a better approach than this though.
+        std::thread::sleep(std::time::Duration::from_millis(32));
+
         for command in recipe.to_commands().iter() {
             self.gf.command(&self.write, command.as_ref())?
         }

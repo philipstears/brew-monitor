@@ -81,8 +81,6 @@ impl Recipe {
         // TODO: this can be computed
         let mut commands = Vec::with_capacity(10);
 
-        commands.push(Command::SetLocalBoilTemperature(self.boil_temperature).to_vec());
-
         commands.push({
             let mut command = String::with_capacity(COMMAND_LEN);
 
