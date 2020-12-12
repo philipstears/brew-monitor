@@ -157,11 +157,15 @@ impl State {
             };
 
         if dismiss_boil_alert {
-            self.boil_alert_active = false;
-            return Some(self.build_boil_status());
+            return Some(self.update_boil_alert_status(false));
         }
 
         None
+    }
+
+    fn update_boil_alert_status(&mut self, boil_alert_active: bool) -> ManagerOrClientNotification {
+        maybe_update("boil_alert_visible", &mut self.boil_alert_active, &boil_alert_active);
+        self.build_boil_status()
     }
 
     fn handle_notification(&mut self, notification: &Notification) -> Option<ManagerOrClientNotification> {
@@ -239,15 +243,13 @@ impl State {
 
                 if let InteractionCode::Dismiss = interaction_code {
                     if self.boil_alert_active {
-                        self.boil_alert_active = false;
-                        return Some(self.build_boil_status());
+                        return Some(self.update_boil_alert_status(false));
                     }
                 }
             }
 
             Notification::PromptBoilAddition(PromptBoilAddition) => {
-                self.boil_alert_active = true;
-                return Some(self.build_boil_status());
+                return Some(self.update_boil_alert_status(true));
             }
 
             other => {
