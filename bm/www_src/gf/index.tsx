@@ -82,6 +82,9 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             case "DelayedHeatTimer":
                 this.setState({...this.state, timer: notification.data});
                 break;
+            case "BoilAlertState":
+                this.setState({...this.state, boil_alert_state: notification.data});
+                break;
         }
     };
 }
