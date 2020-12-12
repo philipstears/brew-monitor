@@ -51,14 +51,14 @@ impl DB {
             .unwrap();
     }
 
-    pub fn insert_dht22_reading(&self, which: String, temperature: u16, gravity: u16) {
+    pub fn insert_dht22_reading(&self, which: String, temperature: u16, humidity: u16) {
         let connection = self.connection.lock().unwrap();
         let when = chrono::Utc::now().naive_utc();
 
         connection
             .execute(
-                "INSERT INTO dht22_readings (\"when\", which, temperature, gravity) values (?1, ?2, ?3, ?4)",
-                params![when, which, temperature, gravity],
+                "INSERT INTO dht22_readings (\"when\", which, temperature, humidity) values (?1, ?2, ?3, ?4)",
+                params![when, which, temperature, humidity],
             )
             .unwrap();
     }
