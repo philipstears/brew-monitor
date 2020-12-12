@@ -22,6 +22,8 @@ const PIN: u8 = 4;
 
 #[tokio::main]
 pub async fn main() {
+    pretty_env_logger::init();
+
     let db = DB::open("brew-monitor.db").unwrap();
     let tilts = Arc::new(RwLock::new(HashMap::<TiltColor, DeviceInfo<Tilt>>::new()));
     let gf = GrainfatherManager::new();
