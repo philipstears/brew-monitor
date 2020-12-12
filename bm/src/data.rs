@@ -57,7 +57,7 @@ impl DB {
 
         connection
             .execute(
-                "INSERT INTO tilt_readings (\"when\", which, temperature, gravity) values (?1, ?2, ?3, ?4)",
+                "INSERT INTO dht22_readings (\"when\", which, temperature, gravity) values (?1, ?2, ?3, ?4)",
                 params![when, which, temperature, gravity],
             )
             .unwrap();
