@@ -17,6 +17,11 @@ pub use recipe::*;
 #[derive(Debug, Eq, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum InteractionCode {
+    /// This is interaction code "C" which is received
+    /// from the controller when the user dismisses a
+    /// prompt on the device.
+    Dismiss,
+
     None,
     SkipDelayedRecipe,
     AddGrain,
@@ -38,6 +43,7 @@ impl FromStr for InteractionCode {
 
     fn from_str(other: &str) -> Result<Self, Self::Err> {
         match other {
+            "C" => Ok(Self::Dismiss),
             "0" => Ok(Self::None),
             "1" => Ok(Self::SkipDelayedRecipe),
             "2" => Ok(Self::AddGrain),
@@ -53,6 +59,7 @@ impl FromStr for InteractionCode {
 impl ToString for InteractionCode {
     fn to_string(&self) -> String {
         match self {
+            Self::Dismiss => "C".into(),
             Self::None => "0".into(),
             Self::SkipDelayedRecipe => "1".into(),
             Self::AddGrain => "2".into(),

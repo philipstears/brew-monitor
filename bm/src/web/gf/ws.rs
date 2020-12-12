@@ -1,4 +1,4 @@
-use crate::devices::gf_manager::GrainfatherManager;
+use crate::devices::gf_manager::{GrainfatherManager, ManagerOrClientNotification};
 use futures::{SinkExt, StreamExt};
 use warp::ws::WebSocket;
 
@@ -12,7 +12,15 @@ impl GrainfatherWebSocketHandler {
 
         loop {
             let notification = gf_rx.recv().unwrap();
-            let json = serde_json::to_string(&notification).unwrap();
+            let json = match notification {
+                ManagerOrClientNotification::ClientNotification(client_notification) => {
+                    serde_json::to_string(&client_notification).unwrap()
+                }
+
+                ManagerOrClientNotification::ManagerNotification(manager_notification) => {
+                    serde_json::to_string(&manager_notification).unwrap()
+                }
+            };
             let message = warp::ws::Message::text(json);
 
             if let Err(e) = ws_tx.send(message).await {

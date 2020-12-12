@@ -6,6 +6,23 @@ use std::sync::{
     Arc, Mutex, MutexGuard,
 };
 
+#[derive(Clone, Debug)]
+pub enum ManagerOrClientNotification {
+    ClientNotification(Notification),
+    ManagerNotification(ManagerNotification),
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type", content = "data")]
+pub enum ManagerNotification {
+    BoilAlertState(BoilAlertState),
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct BoilAlertState {
+    pub boil_alert_visible: bool,
+}
+
 #[derive(Clone)]
 pub struct GrainfatherManager(Arc<Mutex<GrainfatherInternal>>);
 
@@ -26,7 +43,7 @@ impl GrainfatherManager {
         self.lock().send_recipe(recipe)
     }
 
-    pub fn subscribe(&mut self) -> Receiver<Notification> {
+    pub fn subscribe(&mut self) -> Receiver<ManagerOrClientNotification> {
         self.lock().subscribe()
     }
 
@@ -37,7 +54,7 @@ impl GrainfatherManager {
 
 struct GrainfatherInternal {
     client: Option<GrainfatherClient>,
-    subscribers: Arc<Mutex<Vec<Sender<Notification>>>>,
+    subscribers: Arc<Mutex<Vec<Sender<ManagerOrClientNotification>>>>,
     state: Arc<Mutex<State>>,
 }
 
@@ -63,12 +80,16 @@ impl GrainfatherInternal {
 
             client
                 .subscribe(Box::new(move |notification| {
-                    subscribers.lock().unwrap().retain(|subscriber| {
-                        let keep_subscriber = subscriber.send(notification.clone()).is_ok();
-                        keep_subscriber
-                    });
+                    send_notification_to_subscribers(
+                        subscribers.as_ref(),
+                        &ManagerOrClientNotification::ClientNotification(notification.clone()),
+                    );
 
-                    state.lock().unwrap().update(notification);
+                    // Sometimes this will generate an synthetic notification, e.g.
+                    // for boil additions
+                    if let Some(synthetic_notification) = state.lock().unwrap().handle_notification(&notification) {
+                        send_notification_to_subscribers(subscribers.as_ref(), &synthetic_notification);
+                    }
                 }))
                 .unwrap();
 
@@ -78,7 +99,13 @@ impl GrainfatherInternal {
 
     pub fn command(&mut self, command: &Command) -> Result<(), btleplug::Error> {
         let client = self.client.as_ref().ok_or(btleplug::Error::NotConnected)?;
-        client.command(command)
+        let result = client.command(command);
+
+        if let Ok(()) = result {
+            self.state.lock().unwrap().handle_command(&command);
+        }
+
+        result
     }
 
     pub fn send_recipe(&mut self, recipe: &Recipe) -> Result<(), btleplug::Error> {
@@ -86,7 +113,7 @@ impl GrainfatherInternal {
         client.send_recipe(recipe)
     }
 
-    pub fn subscribe(&mut self) -> Receiver<Notification> {
+    pub fn subscribe(&mut self) -> Receiver<ManagerOrClientNotification> {
         let (sender, receiver) = mpsc::channel();
         self.subscribers.lock().unwrap().push(sender);
         receiver
@@ -116,10 +143,28 @@ struct State {
     temp_current: i32,
     // Timer
     timer_active: bool,
+    // Boil Alert Visible
+    boil_alert_active: bool,
 }
 
 impl State {
-    fn update(&mut self, notification: Notification) {
+    fn handle_command(&mut self, command: &Command) -> Option<ManagerOrClientNotification> {
+        let dismiss_boil_alert = self.boil_alert_active
+            && match command {
+                Command::DismissBoilAdditionAlert => true,
+                Command::PressSet => true,
+                _ => false,
+            };
+
+        if dismiss_boil_alert {
+            self.boil_alert_active = false;
+            return Some(self.build_boil_status());
+        }
+
+        None
+    }
+
+    fn handle_notification(&mut self, notification: &Notification) -> Option<ManagerOrClientNotification> {
         match notification {
             Notification::Status1(Status1 {
                 heat_active,
@@ -139,7 +184,13 @@ impl State {
                 maybe_update("interaction_code", &mut self.interaction_code, &interaction_code);
                 maybe_update("step_number", &mut self.step_number, &step_number);
                 maybe_update("delayed_heat_mode_active", &mut self.delayed_heat_mode_active, &delayed_heat_mode_active);
+
+                // Send out boil addition alerts with each status alert
+                // TODO: if we stored the recipe, we could work out whether we were in the boil,
+                // and only send them then
+                return Some(self.build_boil_status());
             }
+
             Notification::Status2(Status2 {
                 heat_power_output_percentage,
                 timer_paused,
@@ -163,6 +214,7 @@ impl State {
                     &sparge_water_alert_displayed,
                 );
             }
+
             Notification::Temp(Temp {
                 desired,
                 current,
@@ -172,21 +224,44 @@ impl State {
                 self.temp_desired = (desired * 100.0) as i32;
                 self.temp_current = (current * 100.0) as i32;
             }
+
             Notification::DelayedHeatTimer(Timer {
                 active,
                 ..
             }) => {
                 maybe_update("timer_active", &mut self.timer_active, &active);
             }
+
             Notification::Interaction(Interaction {
                 interaction_code,
             }) => {
                 println!("[R]: interaction with code {:?}", interaction_code);
+
+                if let InteractionCode::Dismiss = interaction_code {
+                    if self.boil_alert_active {
+                        self.boil_alert_active = false;
+                        return Some(self.build_boil_status());
+                    }
+                }
             }
+
+            Notification::PromptBoilAddition(PromptBoilAddition) => {
+                self.boil_alert_active = true;
+                return Some(self.build_boil_status());
+            }
+
             other => {
                 println!("[R]: {:?}", other);
             }
         }
+
+        None
+    }
+
+    fn build_boil_status(&self) -> ManagerOrClientNotification {
+        ManagerOrClientNotification::ManagerNotification(ManagerNotification::BoilAlertState(BoilAlertState {
+            boil_alert_visible: self.boil_alert_active,
+        }))
     }
 }
 
@@ -201,4 +276,14 @@ where
     println!("[R]: {} changed from {:?} to {:?}", field_name, target, new_value);
 
     *target = new_value.clone();
+}
+
+fn send_notification_to_subscribers(
+    subscribers: &Mutex<Vec<Sender<ManagerOrClientNotification>>>,
+    notification: &ManagerOrClientNotification,
+) {
+    subscribers.lock().unwrap().retain(|subscriber| {
+        let keep_subscriber = subscriber.send(notification.clone()).is_ok();
+        keep_subscriber
+    });
 }
