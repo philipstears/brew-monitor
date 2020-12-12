@@ -1,7 +1,11 @@
+# build assets
 target/
-
-www/
 node_modules/
+www/
 
+# execution by-products
 *.log
+
+# emacs by-products
+\#*
 

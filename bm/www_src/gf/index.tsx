@@ -14,6 +14,7 @@ export interface GrainfatherState {
     status2: Proto.Status2Data;
     temp: Proto.TempData;
     timer: Proto.TimerData;
+    boil_alert_state: Proto.BoilAlertStateData;
 }
 
 export class Grainfather extends React.Component<GrainfatherProps, GrainfatherState> {
@@ -29,6 +30,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             status2: Proto.defaultStatus2(),
             temp: Proto.defaultTemp(),
             timer: Proto.defaultTimer(),
+            boil_alert_state: Proto.defaultBoilAlertState(),
         };
 
         let ws = new WebSocket(this.state.ws_url);
@@ -57,6 +59,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                         status1={this.state.status1}
                         status2={this.state.status2}
                         timer={this.state.timer}
+                        boil_alert_state={this.state.boil_alert_state}
                     />
                 </div>
             </div>
@@ -179,6 +182,7 @@ interface RecipeProps {
     status1: Proto.Status1Data;
     status2: Proto.Status2Data;
     timer: Proto.TimerData;
+    boil_alert_state: Proto.BoilAlertStateData;
 }
 
 export class Recipe extends React.Component<RecipeProps, RecipeState> {
@@ -258,6 +262,13 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
                 overlayClassName="bm-modal-overlay"
             >
                 {this.renderInteraction()}
+            </Modal>
+            <Modal
+                isOpen={this.props.boil_alert_state.boil_alert_visible}
+                className="bm-modal"
+                overlayClassName="bm-modal-overlay"
+            >
+                {this.renderBoilAlert()}
             </Modal>
             <div>
                 Recipe Active (Step {this.props.status1.step_number})
@@ -359,6 +370,18 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
         </React.Fragment>
     );
 
+    renderBoilAlert = () => (
+        <React.Fragment>
+            <h2>Add Boil Addition</h2>
+            <p>
+                Press "Addition Added" to dismiss alert.
+            </p>
+            <button onClick={this.handleDismissBoilAlert}>
+                Addition Added
+            </button>
+        </React.Fragment>
+    );
+
     renderHeatingMashingOrBoiling() {
         if (this.props.status1.step_number > this.state.recipe.mash_steps.length) {
             if (this.props.timer.active) {
@@ -446,6 +469,12 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
     handleSet = async () => {
         await this.command({
             type: "PressSet",
+        });
+    };
+
+    handleDismissBoilAlert = async () => {
+        await this.command({
+            type: "DismissBoilAdditionAlert",
         });
     };
 
