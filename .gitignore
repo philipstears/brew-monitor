@@ -5,6 +5,7 @@ www/
 
 # execution by-products
 *.log
+*.db
 
 # emacs by-products
 \#*

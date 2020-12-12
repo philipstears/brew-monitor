@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 
 use bm_tilt::Tilt;
 
+#[derive(Clone)]
 pub struct DB {
     connection: Arc<Mutex<Connection>>,
 }
