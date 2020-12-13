@@ -575,14 +575,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dht22-monitor"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "dht22_pi",
-]
-
-[[package]]
 name = "dht22_pi"
 version = "0.3.0"
 source = "git+https://github.com/philipstears/dht22_pi#a9ad9e501c1f3c54c26865b20eabb67027f7274c"

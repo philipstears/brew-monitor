@@ -1,8 +1,6 @@
 [workspace]
 members = [
   "bm",
-  "dht22-monitor",
-
   "bm-bluetooth",
   "bm-tilt",
   "bm-grainfather",
