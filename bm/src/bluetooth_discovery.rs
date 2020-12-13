@@ -1,5 +1,5 @@
-use std::{convert::TryFrom, error::Error, sync::mpsc::Sender};
 use log::info;
+use std::{convert::TryFrom, error::Error, sync::mpsc::Sender};
 
 use bm_bluetooth::*;
 use bm_grainfather;
@@ -117,7 +117,6 @@ impl<'z> BluetoothDiscovery<'z> {
                         };
 
                         if let Some(gf_peripheral) = self.btle_central.peripheral(btle_address) {
-
                             info!("Found the grainfather peripheral with address {}", address);
 
                             let gf = GrainfatherClient::try_from(gf_peripheral).unwrap();
@@ -125,8 +124,7 @@ impl<'z> BluetoothDiscovery<'z> {
                             info!("Connected to the grainfather peripheral with address {}", address);
 
                             self.sender.send(BluetoothDiscoveryEvent::DiscoveredGrainfather(gf)).unwrap();
-                        }
-                        else {
+                        } else {
                             info!("Couldn't locate grainfather peripheral in btleplug, will wait until discovery happens again");
                         }
                     }
