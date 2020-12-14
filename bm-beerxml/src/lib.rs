@@ -63,13 +63,22 @@ struct Hop {
     pub name: String,
 
     #[serde(rename = "USE")]
-    pub r#use: String,
+    pub r#use: HopUse,
 
     #[serde(rename = "TIME")]
-    pub time: String,
+    pub time: u16,
 
     #[serde(rename = "AMOUNT")]
     pub amount: f64,
+}
+
+#[derive(Serialize, Deserialize)]
+enum HopUse {
+    #[serde(rename = "Boil")]
+    Boil,
+
+    #[serde(rename = "Dry Hop")]
+    DryHop,
 }
 
 #[derive(Serialize, Deserialize)]
