@@ -4,6 +4,7 @@ members = [
   "bm-bluetooth",
   "bm-tilt",
   "bm-grainfather",
+  "bm-beerxml",
 ]
 
 [patch.crates-io]
