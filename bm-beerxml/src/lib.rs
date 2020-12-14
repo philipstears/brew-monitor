@@ -16,6 +16,12 @@ struct Recipe {
     #[serde(rename = "BREWER")]
     pub brewer: String,
 
+    #[serde(rename = "BATCH_SIZE")]
+    pub batch_size: f64,
+
+    #[serde(rename = "BOIL_SIZE")]
+    pub boil_size: f64,
+
     #[serde(rename = "TYPE")]
     pub r#type: String,
 
@@ -79,6 +85,15 @@ enum HopUse {
 
     #[serde(rename = "Dry Hop")]
     DryHop,
+
+    #[serde(rename = "Mash")]
+    Mash,
+
+    #[serde(rename = "Aroma")]
+    Aroma,
+
+    #[serde(rename = "First Wort")]
+    FirstWort,
 }
 
 #[derive(Serialize, Deserialize)]
