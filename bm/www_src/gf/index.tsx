@@ -283,6 +283,8 @@ export class Recipe extends React.Component<RecipeProps, {}> {
             </div>
             <div className="bm-detail-panel-footer">
                 {this.maybeRenderSkipToAddGrain()}
+                {this.maybeRenderSkipHeating()}
+                {this.maybeRenderSkipToNextStep()}
                 <button onClick={this.handleCancelRecipe}>
                     Cancel Recipe
                 </button>
@@ -470,6 +472,38 @@ export class Recipe extends React.Component<RecipeProps, {}> {
         }
     }
 
+    maybeRenderSkipHeating() {
+        let canSkipHeating =
+            this.props.status1.step_number > 1 &&
+            this.props.status1.step_number <= this.props.recipe.mash_steps.length &&
+            !this.props.timer.active;
+
+        if (canSkipHeating) {
+            return <button onClick={this.handleSkipHeating}>
+                Skip Heating
+            </button>;
+        }
+        else {
+            return <></>;
+        }
+    }
+
+    maybeRenderSkipToNextStep() {
+        let canSkip =
+            this.props.status1.step_number > 1 &&
+            this.props.status1.step_number <= this.props.recipe.mash_steps.length &&
+            this.props.timer.active;
+
+        if (canSkip) {
+            return <button onClick={this.handleSkipToNextStep}>
+                Skip Step
+            </button>;
+        }
+        else {
+            return <></>;
+        }
+    }
+
     handleSendRecipe = async () => {
         await fetch(this.props.recipe_url, {
             method: "POST",
@@ -495,6 +529,34 @@ export class Recipe extends React.Component<RecipeProps, {}> {
             type: "SkipToInteraction",
             data: {
                 type: "AddGrain",
+            }
+        });
+    };
+
+    handleSkipHeating = async () => {
+        await this.command({
+            type: "SkipToStep",
+            data: {
+                step_number: this.props.status1.step_number,
+                can_edit_minutes: 0,
+                time_left_minutes: 0,
+                time_left_seconds: 0,
+                skip_ramp: true,
+                disable_add_grain: true
+            }
+        });
+    };
+
+    handleSkipToNextStep = async () => {
+        await this.command({
+            type: "SkipToStep",
+            data: {
+                step_number: this.props.status1.step_number + 1,
+                can_edit_minutes: 0,
+                time_left_minutes: 0,
+                time_left_seconds: 0,
+                skip_ramp: false,
+                disable_add_grain: true
             }
         });
     };
