@@ -317,10 +317,12 @@ export class Recipe extends React.Component<RecipeProps, {}> {
 
     renderRecipeInactive = () => (
         <React.Fragment>
-            <h2>
+            <h2 className="bm-detail-panel-header">
                 Recipe Inactive
             </h2>
-            <div>
+            <div className="bm-detail-panel-body">
+            </div>
+            <div className="bm-detail-panel-footer">
                 <button onClick={this.handleSendRecipe}>
                     Send Recipe
                 </button>
