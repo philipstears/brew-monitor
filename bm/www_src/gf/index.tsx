@@ -15,6 +15,8 @@ export interface GrainfatherState {
     temp: Proto.TempData;
     timer: Proto.TimerData;
     boil_alert_state: Proto.BoilAlertStateData;
+
+    recipe: Proto.Recipe;
 }
 
 export class Grainfather extends React.Component<GrainfatherProps, GrainfatherState> {
@@ -31,6 +33,32 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             temp: Proto.defaultTemp(),
             timer: Proto.defaultTimer(),
             boil_alert_state: Proto.defaultBoilAlertState(),
+
+            recipe: {
+                "boil_temperature": 55,
+                "boil_time": 9,
+                "mash_volume": 13.25,
+                "sparge_volume": 14.64,
+                "show_water_treatment_alert": false,
+                "show_sparge_counter": true,
+                "show_sparge_alert": true,
+                "delay": { "type": "MinutesSeconds", "data": [5, 0] },
+                "skip_start": false,
+                "name": "STIPA",
+                "hop_stand_time": 0,
+                "boil_power_mode": false,
+                "strike_temp_mode": false,
+                "boil_steps": [
+                    9,
+                    6,
+                    3
+                ],
+                "mash_steps": [
+                    { "temperature": 25, "minutes": 3 },
+                    { "temperature": 35, "minutes": 3 },
+                    { "temperature": 45, "minutes": 3 }
+                ]
+            },
         };
 
         let ws = new WebSocket(this.state.ws_url);
@@ -40,6 +68,8 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
     render = () => (
         <React.Fragment>
             <div id="bm-overview-panel">
+                <h2 className="bm-overview-panel-header">{this.state.recipe.name}</h2>
+
                 <Heat
                     command_url={this.state.command_url}
                     status1={this.state.status1}
@@ -52,16 +82,16 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                 />
             </div>
             <div id="bm-detail-panel">
-                <div>
-                    <Recipe
-                        command_url={this.state.command_url}
-                        recipe_url={this.state.recipe_url}
-                        status1={this.state.status1}
-                        status2={this.state.status2}
-                        timer={this.state.timer}
-                        boil_alert_state={this.state.boil_alert_state}
-                    />
-                </div>
+                <Recipe
+                    command_url={this.state.command_url}
+                    recipe_url={this.state.recipe_url}
+                    status1={this.state.status1}
+                    status2={this.state.status2}
+                    timer={this.state.timer}
+                    boil_alert_state={this.state.boil_alert_state}
+                    recipe={this.state.recipe}
+                    temp={this.state.temp}
+                />
             </div>
         </React.Fragment>
     );
@@ -175,10 +205,6 @@ export class Heat extends React.Component<HeatProps, {}> {
     };
 }
 
-interface RecipeState {
-    recipe: Proto.Recipe;
-}
-
 interface RecipeProps {
     command_url: string;
     recipe_url: string;
@@ -186,39 +212,13 @@ interface RecipeProps {
     status2: Proto.Status2Data;
     timer: Proto.TimerData;
     boil_alert_state: Proto.BoilAlertStateData;
+    recipe: Proto.Recipe;
+    temp: Proto.TempData;
 }
 
-export class Recipe extends React.Component<RecipeProps, RecipeState> {
+export class Recipe extends React.Component<RecipeProps, {}> {
     constructor(props: RecipeProps) {
         super(props);
-
-        this.state = {
-            recipe: {
-                "boil_temperature": 55,
-                "boil_time": 9,
-                "mash_volume": 13.25,
-                "sparge_volume": 14.64,
-                "show_water_treatment_alert": false,
-                "show_sparge_counter": true,
-                "show_sparge_alert": true,
-                "delay": { "type": "MinutesSeconds", "data": [5, 0] },
-                "skip_start": false,
-                "name": "STIPA",
-                "hop_stand_time": 0,
-                "boil_power_mode": false,
-                "strike_temp_mode": false,
-                "boil_steps": [
-                    9,
-                    6,
-                    3
-                ],
-                "mash_steps": [
-                    { "temperature": 25, "minutes": 3 },
-                    { "temperature": 35, "minutes": 3 },
-                    { "temperature": 45, "minutes": 3 }
-                ]
-            },
-        };
     }
 
     render() {
@@ -273,12 +273,14 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
             >
                 {this.renderBoilAlert()}
             </Modal>
-            <div>
+            <h2 className="bm-detail-panel-header">
                 Recipe Active (Step {this.props.status1.step_number})
+            </h2>
+            <div className="bm-detail-panel-body">
+                {this.renderHeatingMashingOrBoiling()}
             </div>
-            {this.renderHeatingMashingOrBoiling()}
-            {this.maybeRenderSkipToAddGrain()}
-            <div>
+            <div className="bm-detail-panel-footer">
+                {this.maybeRenderSkipToAddGrain()}
                 <button onClick={this.handleCancelRecipe}>
                     Cancel Recipe
                 </button>
@@ -288,9 +290,9 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
 
     renderRecipeInactive = () => (
         <React.Fragment>
-            <div>
+            <h2>
                 Recipe Inactive
-            </div>
+            </h2>
             <div>
                 <button onClick={this.handleSendRecipe}>
                     Send Recipe
@@ -318,13 +320,15 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
 
     renderInteractionAddGrain = () => (
         <React.Fragment>
-            <h2>Add Grain</h2>
-            <p>
+            <h2 className="bm-modal-header">Add Grain</h2>
+            <p className="bm-modal-body">
                 Press "Grain Added" to start mash.
             </p>
-            <button onClick={this.handleSet}>
-                Grain Added
-            </button>
+            <div className="bm-modal-footer">
+                <button onClick={this.handleSet}>
+                    Grain Added
+                </button>
+            </div>
         </React.Fragment>
     );
 
@@ -386,7 +390,7 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
     );
 
     renderHeatingMashingOrBoiling() {
-        if (this.props.status1.step_number > this.state.recipe.mash_steps.length) {
+        if (this.props.status1.step_number > this.props.recipe.mash_steps.length) {
             if (this.props.timer.active) {
                 return this.renderBoiling();
             }
@@ -403,7 +407,10 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
     }
 
     renderHeatingToBoil = () => (
-        <div>Heating to Boil Temperature</div>
+        <>
+            <div>Heating to Boil Temperature...</div>
+            <HeatProgress temp={this.props.temp} />
+        </>
     );
 
     renderBoiling = () => (
@@ -411,7 +418,10 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
     );
 
     renderHeating = () => (
-        <div>Heating to Mash Temperature</div>
+        <>
+            <div>Heating to Mash Temperature...</div>
+            <HeatProgress temp={this.props.temp} />
+        </>
     );
 
     renderMashing = () => (
@@ -420,11 +430,9 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
 
     maybeRenderSkipToAddGrain() {
         if (this.props.status1.step_number == 1) {
-            return <div>
-                <button onClick={this.handleSkipToAddGrain}>
-                    Skip to Add Grain
-                </button>
-            </div>;
+            return <button onClick={this.handleSkipToAddGrain}>
+                Skip to Add Grain
+            </button>;
         }
         else {
             return <></>;
@@ -437,7 +445,7 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(this.state.recipe),
+            body: JSON.stringify(this.props.recipe),
         });
     };
 
@@ -490,4 +498,21 @@ export class Recipe extends React.Component<RecipeProps, RecipeState> {
             body: JSON.stringify(command),
         });
     };
+}
+
+export interface HeatProgressProps {
+    temp: Proto.TempData,
+}
+
+export class HeatProgress extends React.Component<HeatProgressProps, {}> {
+    render = () => (
+        <div className="progress-bar-outer">
+            <div className="progress-bar-inner heat" style={ { width: this.percentage().toString() + "%" } } >
+            </div>
+        </div>
+    );
+
+    percentage() {
+        return ((this.props.temp.current / this.props.temp.desired) * 100) << 0;
+    }
 }
