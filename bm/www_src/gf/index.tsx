@@ -363,58 +363,85 @@ export class Recipe extends React.Component<RecipeProps, {}> {
 
     renderInteractionStartSparge = () => (
         <React.Fragment>
-            <h2>Mash Out Done</h2>
-            <button onClick={this.handleSet}>
-                Start Sparge
-            </button>
+            <h2 className="bm-modal-header">Mash Out Done</h2>
+            <p className="bm-modal-body">
+                Click "Start Sparge" to begin sparging.
+            </p>
+            <div className="bm-modal-footer">
+                <button onClick={this.handleSet}>
+                    Start Sparge
+                </button>
+            </div>
         </React.Fragment>
     );
 
     renderInteractionSparge = () => (
         <React.Fragment>
-            <h2>Sparging</h2>
-            <button onClick={this.handleSet}>
-                Sparge Done
-            </button>
+            <h2 className="bm-modal-header">Sparging</h2>
+            <p className="bm-modal-body">
+                Add sparge water incrementally, and click "Sparge Done" when done.
+            </p>
+            <div className="bm-modal-footer">
+                <button onClick={this.handleSet}>
+                    Sparge Done
+                </button>
+            </div>
         </React.Fragment>
     );
 
     renderInteractionBoilReached = () => (
         <React.Fragment>
-            <h2>Boil Reached</h2>
-            <button onClick={this.handleSet}>
-                OK
-            </button>
+            <h2 className="bm-modal-header">Boil Reached</h2>
+            <p className="bm-modal-body">
+                The boil temperature has been reached.
+            </p>
+            <div className="bm-modal-footer">
+                <button onClick={this.handleSet}>
+                    OK
+                </button>
+            </div>
         </React.Fragment>
     );
 
     renderInteractionBoilFinished = () => (
         <React.Fragment>
-            <h2>Boil Done</h2>
-            <button onClick={this.handleSet}>
-                OK
-            </button>
+            <h2 className="bm-modal-header">Boil Done</h2>
+            <p className="bm-modal-body">
+                The end of the boil has been reached.
+            </p>
+            <div className="bm-modal-footer">
+                <button onClick={this.handleSet}>
+                    OK
+                </button>
+            </div>
         </React.Fragment>
     );
 
     renderInteractionUnknown = () => (
         <React.Fragment>
-            <h2>Unknown Interaction: {JSON.stringify(this.props.status1.interaction_code)}</h2>
-            <button onClick={this.handleSet}>
-                OK
-            </button>
+            <h2 className="bm-modal-header">Unknown Interaction</h2>
+            <p className="bm-modal-body">
+                {JSON.stringify(this.props.status1.interaction_code)}
+            </p>
+            <div className="bm-modal-footer">
+                <button onClick={this.handleSet}>
+                    OK
+                </button>
+            </div>
         </React.Fragment>
     );
 
     renderBoilAlert = () => (
         <React.Fragment>
-            <h2>Add Boil Addition</h2>
-            <p>
+            <h2 className="bm-modal-header">Add Boil Addition</h2>
+            <p className="bm-modal-body">
                 Press "Addition Added" to dismiss alert.
             </p>
-            <button onClick={this.handleDismissBoilAlert}>
-                Addition Added
-            </button>
+            <div className="bm-modal-footer">
+                <button onClick={this.handleDismissBoilAlert}>
+                    Addition Added
+                </button>
+            </div>
         </React.Fragment>
     );
 
