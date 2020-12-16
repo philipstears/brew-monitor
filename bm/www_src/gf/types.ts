@@ -99,6 +99,7 @@ export interface TimerData {
     active: boolean;
     remaining_minutes: number;
     remaining_seconds: number;
+    total_start_time: number;
 }
 
 /**

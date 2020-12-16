@@ -241,18 +241,20 @@ export class Recipe extends React.Component<RecipeProps, {}> {
         }
 
         return <React.Fragment>
-            <div>
-                Recipe Delay {this.props.timer.remaining_minutes - 1}:{this.props.timer.remaining_seconds}
+            <h2 className="bm-detail-panel-header">
+                Recipe Delay
+            </h2>
+            <div className="bm-detail-panel-body">
+                <TimerProgress timer={this.props.timer} />
             </div>
-            <div>
+            <div className="bm-detail-panel-footer">
                 <button onClick={this.handleSkipTimer}>
                     Skip Timer
                 </button>
-            <div>
+
                 <button onClick={this.handleCancelRecipe}>
                     Cancel Recipe
                 </button>
-            </div>
             </div>
         </React.Fragment>
     }
@@ -274,7 +276,7 @@ export class Recipe extends React.Component<RecipeProps, {}> {
                 {this.renderBoilAlert()}
             </Modal>
             <h2 className="bm-detail-panel-header">
-                Recipe Active (Step {this.props.status1.step_number})
+                Recipe Active: {this.stepName()}
             </h2>
             <div className="bm-detail-panel-body">
                 {this.renderHeatingMashingOrBoiling()}
@@ -287,6 +289,29 @@ export class Recipe extends React.Component<RecipeProps, {}> {
             </div>
         </React.Fragment>
     );
+
+    stepName() {
+        let step_number = this.props.status1.step_number;
+        let mash_steps = this.props.recipe.mash_steps.length;
+
+        if (this.props.timer.active == false && step_number == 1) {
+            return "Mash In";
+        }
+        if (step_number < mash_steps) {
+            return "Mash " + step_number.toString();
+        }
+        else if (step_number == mash_steps) {
+            if (mash_steps > 1) {
+                return "Mash Out";
+            }
+            else {
+                return "Mash " + step_number.toString();
+            }
+        }
+        else {
+            return "Boil";
+        }
+    }
 
     renderRecipeInactive = () => (
         <React.Fragment>
@@ -414,7 +439,10 @@ export class Recipe extends React.Component<RecipeProps, {}> {
     );
 
     renderBoiling = () => (
-        <div>Boiling - Time Remaining {this.props.timer.remaining_minutes - 1}:{this.props.timer.remaining_seconds}</div>
+        <>
+            <div>Boiling...</div>
+            <TimerProgress timer={this.props.timer} />
+        </>
     );
 
     renderHeating = () => (
@@ -425,11 +453,14 @@ export class Recipe extends React.Component<RecipeProps, {}> {
     );
 
     renderMashing = () => (
-        <div>Mashing - Time Remaining {this.props.timer.remaining_minutes - 1}:{this.props.timer.remaining_seconds}</div>
+        <>
+            <div>Mashing...</div>
+            <TimerProgress timer={this.props.timer} />
+        </>
     );
 
     maybeRenderSkipToAddGrain() {
-        if (this.props.status1.step_number == 1) {
+        if (this.props.status1.step_number == 1 && !this.props.timer.active) {
             return <button onClick={this.handleSkipToAddGrain}>
                 Skip to Add Grain
             </button>;
@@ -508,11 +539,59 @@ export class HeatProgress extends React.Component<HeatProgressProps, {}> {
     render = () => (
         <div className="progress-bar-outer">
             <div className="progress-bar-inner heat" style={ { width: this.percentage().toString() + "%" } } >
+                &nbsp;
             </div>
         </div>
     );
 
     percentage() {
         return ((this.props.temp.current / this.props.temp.desired) * 100) << 0;
+    }
+}
+
+export interface TimerProgressProps {
+    timer: Proto.TimerData,
+}
+
+export class TimerProgress extends React.Component<TimerProgressProps, {}> {
+    render = () => {
+        if (this.props.timer.remaining_minutes == 0) {
+            return <></>;
+        }
+
+        return <div className="progress-bar-outer">
+            <div className="progress-bar-inner time" style={ { width: this.percentage().toString() + "%" } } >
+            </div>
+            <div className="progress-bar-label">
+                {this.renderTime()}
+            </div>
+        </div>
+    };
+
+    renderTime = () => {
+        let timer = this.props.timer;
+
+        // The final minute gets rendered as a 60 second countdown
+        if ( timer.remaining_minutes == 1 ) {
+            return <>{timer.remaining_seconds} seconds remaining</>;
+        }
+        else {
+            return <>{timer.remaining_minutes - 1} minutes and {timer.remaining_seconds} seconds remaining</>;
+        }
+    };
+
+    percentage() {
+        let timer = this.props.timer;
+
+        // The final minute gets rendered as a 60 second countdown
+        if ( timer.remaining_minutes == 1 ) {
+            let remaining_seconds = timer.remaining_seconds;
+            return (((60 - remaining_seconds) / 60) * 100) << 0;
+        }
+        else {
+            let total_minutes = timer.total_start_time - 1;
+            let remaining_minutes = timer.remaining_minutes - 1;
+            return (((total_minutes - remaining_minutes) / total_minutes) * 100) << 0;
+        }
     }
 }

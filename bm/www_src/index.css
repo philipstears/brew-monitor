@@ -9,6 +9,8 @@
     --dpo02: hsl(0, 0%, 16%);
 
     --heat-color: #d33d3d;
+    --pump-color: #40cb40;
+    --time-color: #435475;
 }
 
 * {
@@ -85,20 +87,24 @@ button {
 }
 
 .bm-detail-panel-header {
-    grid-area: "header";
+    grid-area: header;
     padding: var(--spacing);
 }
 
 .bm-detail-panel-body {
-    grid-area: "body";
+    grid-area: body;
     padding: var(--spacing);
 }
 
 .bm-detail-panel-footer {
-    grid-area: "footer";
+    grid-area: footer;
     display: flex;
-    justify-content: end;
+    justify-content: flex-end;
     padding: var(--spacing);
+}
+
+.bm-detail-panel-footer > button {
+    margin-left: var(--spacing);
 }
 
 #bm-overview-panel,
@@ -183,7 +189,7 @@ button {
 }
 
 .pump-button.on {
-    border-color: #40cb40;
+    border-color: var(--pump-color);
 }
 
 .bm-modal-overlay {
@@ -233,12 +239,23 @@ button {
     padding: 10px;
     margin-top: var(--spacing);
     margin-bottom: var(--spacing);
-}
-
-.progress-bar-inner {
-    height: 24px;
+    display: grid;
 }
 
 .progress-bar-inner.heat {
     background-color: var(--heat-color);
+}
+
+.progress-bar-inner.time {
+    background-color: var(--time-color);
+}
+
+.progress-bar-inner.time,
+.progress-bar-label {
+    grid-row: 1;
+    grid-column: 1;
+}
+
+.progress-bar-label {
+    text-align: center;
 }
