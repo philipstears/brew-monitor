@@ -645,25 +645,24 @@ export interface TimerProgressProps {
 }
 
 export class TimerProgress extends React.Component<TimerProgressProps, {}> {
-    render = () => {
-        if (this.props.timer.remaining_minutes == 0) {
-            return <></>;
-        }
-
-        return <div className="progress-bar-outer">
+    render = () => (
+        <div className="progress-bar-outer">
             <div className="progress-bar-inner time" style={ { width: this.percentage().toString() + "%" } } >
             </div>
             <div className="progress-bar-label">
                 {this.renderTime()}
             </div>
         </div>
-    };
+    );
 
     renderTime = () => {
         let timer = this.props.timer;
 
-        // The final minute gets rendered as a 60 second countdown
-        if ( timer.remaining_minutes == 1 ) {
+        if ( timer.remaining_minutes == 0 ) {
+            return <>&nbsp;</>;
+        }
+        else if ( timer.remaining_minutes == 1 ) {
+            // The final minute gets rendered as a 60 second countdown
             return <>{timer.remaining_seconds} seconds remaining</>;
         }
         else {
@@ -674,8 +673,11 @@ export class TimerProgress extends React.Component<TimerProgressProps, {}> {
     percentage() {
         let timer = this.props.timer;
 
-        // The final minute gets rendered as a 60 second countdown
-        if ( timer.remaining_minutes == 1 ) {
+        if ( timer.remaining_minutes == 0 ) {
+            return 100;
+        }
+        else if ( timer.remaining_minutes == 1 ) {
+            // The final minute gets rendered as a 60 second countdown
             let remaining_seconds = timer.remaining_seconds;
             return (((60 - remaining_seconds) / 60) * 100) << 0;
         }
