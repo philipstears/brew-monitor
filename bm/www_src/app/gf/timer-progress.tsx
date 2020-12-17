@@ -28,7 +28,20 @@ export class TimerProgress extends React.Component<TimerProgressProps, {}> {
             return <>{timer.remaining_seconds} seconds remaining</>;
         }
         else {
-            return <>{timer.remaining_minutes - 1} minutes and {timer.remaining_seconds} seconds remaining</>;
+            let remaining_minutes = timer.remaining_minutes - 1;
+            let remaining_seconds = timer.remaining_seconds;
+
+            // More fun from the controller :/
+            if ( remaining_seconds == 60 ) {
+                remaining_minutes += 1;
+                remaining_seconds = 0;
+            }
+
+            // TODO: look into the Mozilla localization library
+            let minutes_phrase = remaining_minutes == 1 ? `${remaining_minutes} minute` : `${remaining_minutes} minutes`;
+            let seconds_phrase = remaining_seconds == 1 ? `${remaining_seconds} second` : `${remaining_minutes} seconds`;
+
+            return <>{minutes_phrase} and {seconds_phrase} remaining</>;
         }
     };
 
