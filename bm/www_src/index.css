@@ -154,8 +154,8 @@ button {
 
 .heat-button,
 .pump-button {
-    width: 100px;
-    height: 100px;
+    width: 125px;
+    height: 125px;
     background: inherit;
     border-radius: 50%;
     border: 8px solid #ccc;
