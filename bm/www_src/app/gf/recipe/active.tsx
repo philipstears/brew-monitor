@@ -69,10 +69,18 @@ export class Active extends React.Component<ActiveProps, {}> {
             }
         }
 
+        if (this.isDone()) {
+            return "Done";
+        }
+
         return "Boil";
     }
 
     renderHeatingMashingOrBoiling() {
+        if (this.isDone()) {
+            return this.renderDone();
+        }
+
         if (this.isInBoil()) {
             if (this.isInRamp()) {
                 return this.renderHeatingToBoil();
@@ -90,12 +98,18 @@ export class Active extends React.Component<ActiveProps, {}> {
     }
 
     isInBoil(): boolean {
-        return this.props.status1.step_number > this.props.recipe.mash_steps.length;
+        return this.props.status1.step_number == 1 + this.props.recipe.mash_steps.length;
+    }
+
+    isDone(): boolean {
+        return this.props.status1.step_number == 2 + this.props.recipe.mash_steps.length;
     }
 
     isInRamp(): boolean {
         return !this.props.timer.active;
     }
+
+    renderDone = () => (<></>);
 
     renderHeatingToBoil = () => (
         <>
