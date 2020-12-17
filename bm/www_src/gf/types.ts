@@ -179,6 +179,7 @@ export function defaultTimer(): TimerData {
         active: false,
         remaining_minutes: 0,
         remaining_seconds: 0,
+        total_start_time: 0,
     };
 }
 
