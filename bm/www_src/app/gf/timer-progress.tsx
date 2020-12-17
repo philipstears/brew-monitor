@@ -57,7 +57,7 @@ export class TimerProgress extends React.Component<TimerProgressProps, {}> {
             return (((60 - remaining_seconds) / 60) * 100) << 0;
         }
         else {
-            let total_seconds = 60 * timer.total_start_time - 1;
+            let total_seconds = 60 * (timer.total_start_time - 1);
             let remaining_seconds = (60 * (timer.remaining_minutes - 1)) + timer.remaining_seconds;
             return (((total_seconds - remaining_seconds) / total_seconds) * 100) << 0;
         }
