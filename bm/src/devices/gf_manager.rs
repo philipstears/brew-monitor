@@ -159,15 +159,21 @@ struct State {
 
 impl State {
     fn handle_command(&mut self, command: &Command) -> Option<ManagerOrClientNotification> {
-        let dismiss_boil_alert = self.boil_alert_active
-            && match command {
+        let maybe_dismiss_alert =
+            match command {
                 Command::DismissBoilAdditionAlert => true,
                 Command::PressSet => true,
                 _ => false,
             };
 
-        if dismiss_boil_alert {
-            return Some(self.update_boil_alert_status(false));
+        if maybe_dismiss_alert {
+            if self.sparge_water_alert_active {
+                return Some(self.update_sparge_water_alert_status(false));
+            }
+
+            if self.boil_alert_active{
+                return Some(self.update_boil_alert_status(false));
+            }
         }
 
         None
