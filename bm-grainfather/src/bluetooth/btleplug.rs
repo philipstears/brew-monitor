@@ -141,7 +141,7 @@ impl Client {
 
         // Otherwise the controller becomes unresponsive, there's got to be
         // a better approach than this though.
-        std::thread::sleep(std::time::Duration::from_millis(32));
+        std::thread::sleep(std::time::Duration::from_millis(200));
 
         for command in recipe.to_commands().iter() {
             self.gf.command(&self.write, command.as_ref())?
