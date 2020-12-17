@@ -140,9 +140,14 @@ export class Active extends React.Component<ActiveProps, {}> {
     }
 
     maybeRenderSkipHeating() {
+
+        // NOTE: for the mash-in (heating for step 1), there's a
+        // skip-to-add-grain option, rather than a skip-heating option
+        //
+        // NOTE: we should be able to skip heating for the boil step too,
+        // so no need to check if we're in the mash step range
         let canSkipHeating =
             this.props.status1.step_number > 1 &&
-            this.props.status1.step_number <= this.props.recipe.mash_steps.length &&
             !this.props.timer.active;
 
         if (!canSkipHeating) {
@@ -156,7 +161,6 @@ export class Active extends React.Component<ActiveProps, {}> {
 
     maybeRenderSkipToNextStep() {
         let canSkip =
-            this.props.status1.step_number > 1 &&
             this.props.status1.step_number <= this.props.recipe.mash_steps.length &&
             this.props.timer.active;
 
