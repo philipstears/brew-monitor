@@ -17,7 +17,7 @@ export class BoilAdditionModal extends React.Component<BoilAdditionModalProps, {
 
     render = () => (
         <Modal
-            isOpen={this.props.boilAlertState.boil_alert_visible}
+            isOpen={this.props.boilAlertState.visible}
             className="bm-modal"
             overlayClassName="bm-modal-overlay"
         >

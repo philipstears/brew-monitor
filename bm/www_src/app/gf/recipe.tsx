@@ -12,7 +12,8 @@ interface RecipeProps {
     status1: Proto.Status1Data;
     status2: Proto.Status2Data;
     timer: Proto.TimerData;
-    boil_alert_state: Proto.BoilAlertStateData;
+    boilAlertState: Proto.BoilAlertStateData;
+    spargeWaterAlertState: Proto.HeatSpargeWaterAlertStateData;
     recipe: Proto.Recipe;
     temp: Proto.TempData;
 }
@@ -36,7 +37,8 @@ export class Recipe extends React.Component<RecipeProps, {}> {
                    status1={this.props.status1}
                    status2={this.props.status2}
                    timer={this.props.timer}
-                   boil_alert_state={this.props.boil_alert_state}
+                   boilAlertState={this.props.boilAlertState}
+                   spargeWaterAlertState={this.props.spargeWaterAlertState}
                    recipe={this.props.recipe}
                    temp={this.props.temp} />;
     }

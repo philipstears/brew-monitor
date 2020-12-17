@@ -8,13 +8,15 @@ import { Client }  from "../client";
 
 import { InteractionModal }  from "./active/interaction-modal";
 import { BoilAdditionModal }  from "./active/boil-addition-modal";
+import { HeatSpargeWaterModal }  from "./active/heat-sparge-water-modal";
 
 interface ActiveProps {
     client: Client;
     status1: Proto.Status1Data;
     status2: Proto.Status2Data;
     timer: Proto.TimerData;
-    boil_alert_state: Proto.BoilAlertStateData;
+    boilAlertState: Proto.BoilAlertStateData;
+    spargeWaterAlertState: Proto.HeatSpargeWaterAlertStateData;
     recipe: Proto.Recipe;
     temp: Proto.TempData;
 }
@@ -27,7 +29,8 @@ export class Active extends React.Component<ActiveProps, {}> {
     render = () => (
         <React.Fragment>
             <InteractionModal client={this.props.client} status1={this.props.status1} />
-            <BoilAdditionModal client={this.props.client} status1={this.props.status1} boilAlertState={this.props.boil_alert_state} />
+            <BoilAdditionModal client={this.props.client} status1={this.props.status1} boilAlertState={this.props.boilAlertState} />
+            <HeatSpargeWaterModal client={this.props.client} status1={this.props.status1} spargeWaterAlertState={this.props.spargeWaterAlertState} />
             <h2 className="bm-detail-panel-header">
                 Recipe Active: {this.stepName()}
             </h2>

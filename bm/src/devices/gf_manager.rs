@@ -16,11 +16,17 @@ pub enum ManagerOrClientNotification {
 #[serde(tag = "type", content = "data")]
 pub enum ManagerNotification {
     BoilAlertState(BoilAlertState),
+    HeatSpargeWaterAlertState(HeatSpargeWaterAlertState),
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct BoilAlertState {
-    pub boil_alert_visible: bool,
+    pub visible: bool,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct HeatSpargeWaterAlertState {
+    pub visible: bool,
 }
 
 #[derive(Clone)]
@@ -87,8 +93,10 @@ impl GrainfatherInternal {
 
                     // Sometimes this will generate an synthetic notification, e.g.
                     // for boil additions
-                    if let Some(synthetic_notification) = state.lock().unwrap().handle_notification(&notification) {
-                        send_notification_to_subscribers(subscribers.as_ref(), &synthetic_notification);
+                    if let Some(synthetic_notifications) = state.lock().unwrap().handle_notification(&notification) {
+                        for synthetic_notification in synthetic_notifications.iter() {
+                            send_notification_to_subscribers(subscribers.as_ref(), &synthetic_notification);
+                        }
                     }
                 }))
                 .unwrap();
@@ -145,6 +153,8 @@ struct State {
     timer_active: bool,
     // Boil Alert Visible
     boil_alert_active: bool,
+    // Heat Sparge Water Alert Visible
+    sparge_water_alert_active: bool,
 }
 
 impl State {
@@ -168,7 +178,12 @@ impl State {
         self.build_boil_status()
     }
 
-    fn handle_notification(&mut self, notification: &Notification) -> Option<ManagerOrClientNotification> {
+    fn update_sparge_water_alert_status(&mut self, sparge_water_alert_active: bool) -> ManagerOrClientNotification {
+        maybe_update("sparge_water_alert_visible", &mut self.sparge_water_alert_active, &sparge_water_alert_active);
+        self.build_sparge_water_status()
+    }
+
+    fn handle_notification(&mut self, notification: &Notification) -> Option<Vec<ManagerOrClientNotification>> {
         match notification {
             Notification::Status1(Status1 {
                 heat_active,
@@ -192,7 +207,10 @@ impl State {
                 // Send out boil addition alerts with each status alert
                 // TODO: if we stored the recipe, we could work out whether we were in the boil,
                 // and only send them then
-                return Some(self.build_boil_status());
+                return Some(vec![
+                    self.build_boil_status(),
+                    self.build_sparge_water_status(),
+                ]);
             }
 
             Notification::Status2(Status2 {
@@ -243,13 +261,21 @@ impl State {
 
                 if let InteractionCode::Dismiss = interaction_code {
                     if self.boil_alert_active {
-                        return Some(self.update_boil_alert_status(false));
+                        return Some(vec![self.update_boil_alert_status(false)]);
+                    }
+
+                    if self.sparge_water_alert_active {
+                        return Some(vec![self.update_sparge_water_alert_status(false)]);
                     }
                 }
             }
 
             Notification::PromptBoilAddition(PromptBoilAddition) => {
-                return Some(self.update_boil_alert_status(true));
+                return Some(vec![self.update_boil_alert_status(true)]);
+            }
+
+            Notification::PromptSpargeWater(PromptSpargeWater) => {
+                return Some(vec![self.update_sparge_water_alert_status(true)]);
             }
 
             other => {
@@ -262,7 +288,13 @@ impl State {
 
     fn build_boil_status(&self) -> ManagerOrClientNotification {
         ManagerOrClientNotification::ManagerNotification(ManagerNotification::BoilAlertState(BoilAlertState {
-            boil_alert_visible: self.boil_alert_active,
+            visible: self.boil_alert_active,
+        }))
+    }
+
+    fn build_sparge_water_status(&self) -> ManagerOrClientNotification {
+        ManagerOrClientNotification::ManagerNotification(ManagerNotification::HeatSpargeWaterAlertState(HeatSpargeWaterAlertState {
+            visible: self.sparge_water_alert_active,
         }))
     }
 }

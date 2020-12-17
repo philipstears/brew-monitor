@@ -19,6 +19,7 @@ export interface GrainfatherState {
     temp: Proto.TempData;
     timer: Proto.TimerData;
     boil_alert_state: Proto.BoilAlertStateData;
+    sparge_water_alert_state: Proto.HeatSpargeWaterAlertStateData;
 
     recipe: Proto.Recipe;
 }
@@ -36,6 +37,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             temp: Proto.defaultTemp(),
             timer: Proto.defaultTimer(),
             boil_alert_state: Proto.defaultBoilAlertState(),
+            sparge_water_alert_state: Proto.defaultHeatSpargeWaterAlertState(),
 
             recipe: {
                 "boil_temperature": 55,
@@ -90,7 +92,8 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                     status1={this.state.status1}
                     status2={this.state.status2}
                     timer={this.state.timer}
-                    boil_alert_state={this.state.boil_alert_state}
+                    boilAlertState={this.state.boil_alert_state}
+                    spargeWaterAlertState={this.state.sparge_water_alert_state}
                     recipe={this.state.recipe}
                     temp={this.state.temp}
                 />
@@ -116,6 +119,9 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                 break;
             case "BoilAlertState":
                 this.setState({...this.state, boil_alert_state: notification.data});
+                break;
+            case "HeatSpargeWaterAlertState":
+                this.setState({...this.state, sparge_water_alert_state: notification.data});
                 break;
         }
     };
