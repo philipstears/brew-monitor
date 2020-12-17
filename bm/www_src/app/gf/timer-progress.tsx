@@ -39,7 +39,7 @@ export class TimerProgress extends React.Component<TimerProgressProps, {}> {
 
             // TODO: look into the Mozilla localization library
             let minutes_phrase = remaining_minutes == 1 ? `${remaining_minutes} minute` : `${remaining_minutes} minutes`;
-            let seconds_phrase = remaining_seconds == 1 ? `${remaining_seconds} second` : `${remaining_minutes} seconds`;
+            let seconds_phrase = remaining_seconds == 1 ? `${remaining_seconds} second` : `${remaining_seconds} seconds`;
 
             return <>{minutes_phrase} and {seconds_phrase} remaining</>;
         }
