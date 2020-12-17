@@ -49,13 +49,15 @@ export class Active extends React.Component<ActiveProps, {}> {
         let step_number = this.props.status1.step_number;
         let mash_steps = this.props.recipe.mash_steps.length;
 
-        if (this.props.timer.active == false && step_number == 1) {
+        if (step_number == 1 && this.isInRamp()) {
             return "Mash In";
         }
+
         if (step_number < mash_steps) {
             return "Mash " + step_number.toString();
         }
-        else if (step_number == mash_steps) {
+
+        if (step_number == mash_steps) {
             if (mash_steps > 1) {
                 return "Mash Out";
             }
@@ -63,26 +65,33 @@ export class Active extends React.Component<ActiveProps, {}> {
                 return "Mash " + step_number.toString();
             }
         }
-        else {
-            return "Boil";
-        }
+
+        return "Boil";
     }
 
     renderHeatingMashingOrBoiling() {
-        if (this.props.status1.step_number > this.props.recipe.mash_steps.length) {
-            if (this.props.timer.active) {
-                return this.renderBoiling();
-            }
-            else {
+        if (this.isInBoil()) {
+            if (this.isInRamp()) {
                 return this.renderHeatingToBoil();
             }
+            else {
+                return this.renderBoiling();
+            }
         }
-        else if (this.props.timer.active) {
-            return this.renderMashing();
-        }
-        else {
+
+        if (this.isInRamp()) {
             return this.renderHeating();
         }
+
+        return this.renderMashing();
+    }
+
+    isInBoil(): boolean {
+        return this.props.status1.step_number > this.props.recipe.mash_steps.length;
+    }
+
+    isInRamp(): boolean {
+        return !this.props.timer.active;
     }
 
     renderHeatingToBoil = () => (
