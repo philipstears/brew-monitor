@@ -69,6 +69,10 @@ export class Active extends React.Component<ActiveProps, {}> {
             }
         }
 
+        if (this.isInSparge()) {
+            return "Sparging";
+        }
+
         if (this.isDone()) {
             return "Done";
         }
@@ -90,6 +94,10 @@ export class Active extends React.Component<ActiveProps, {}> {
             }
         }
 
+        if (this.isInSparge()) {
+            return this.renderSparging();
+        }
+
         if (this.isInRamp()) {
             return this.renderHeating();
         }
@@ -97,17 +105,23 @@ export class Active extends React.Component<ActiveProps, {}> {
         return this.renderMashing();
     }
 
-    isInBoil(): boolean {
+    isInSparge(): boolean {
         return this.props.status1.step_number == 1 + this.props.recipe.mash_steps.length;
     }
 
-    isDone(): boolean {
+    isInBoil(): boolean {
         return this.props.status1.step_number == 2 + this.props.recipe.mash_steps.length;
+    }
+
+    isDone(): boolean {
+        return this.props.status1.step_number == 3 + this.props.recipe.mash_steps.length;
     }
 
     isInRamp(): boolean {
         return !this.props.timer.active;
     }
+
+    renderSparging = () => (<></>);
 
     renderDone = () => (<></>);
 
