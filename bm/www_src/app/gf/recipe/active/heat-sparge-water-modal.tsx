@@ -22,6 +22,9 @@ export class HeatSpargeWaterModal extends React.Component<HeatSpargeWaterModalPr
             overlayClassName="bm-modal-overlay"
         >
             <h2 className="bm-modal-header">Heat Sparge Water</h2>
+            <p className="bm-modal-body">
+                Start heating your sparge water ready for the sparge.
+            </p>
             <div className="bm-modal-footer">
                 <button onClick={this.handleDismissAlert}>
                     OK
