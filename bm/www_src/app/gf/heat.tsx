@@ -17,7 +17,7 @@ export class Heat extends React.Component<HeatProps, {}> {
                 onClick={this.handleHeatToggleClick}>
                 <div className="temp-display">
                     <div className="temp-display-current">{this.props.temp.current}°C</div>
-                    <div className="temp-display-desired">{this.props.temp.desired}°C</div>
+                    <div className="temp-display-desired">{this.props.temp.desired > 100 ? "∞" : this.props.temp.desired.toString + "°C"}</div>
                 </div>
             </button>
             <button className="heat-increase" onClick={this.handleUpClick}>+</button>
