@@ -41,3 +41,6 @@ branch = "master"
 [package.metadata.deb]
 maintainer-scripts = "debian/"
 systemd-units = { enable = false }
+assets = [
+    ["target/release/bm", "/usr/local/bin/bm", "755"],
+]

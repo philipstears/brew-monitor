@@ -4,5 +4,5 @@ set -x
 
 cross build --target armv7-unknown-linux-gnueabihf --release
 
-cargo deb -v --no-build --target armv7-unknown-linux-gnueabih -p bm --no-strip
+cargo deb -v --no-build --target armv7-unknown-linux-gnueabihf -p bm --no-strip
 
