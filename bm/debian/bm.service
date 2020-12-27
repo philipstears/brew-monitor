@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/local/bin/bm
-WorkingDirectory=/home/pi/
+WorkingDirectory=~
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
