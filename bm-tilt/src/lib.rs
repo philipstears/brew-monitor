@@ -81,6 +81,7 @@ impl TryFrom<u128> for TiltColor {
     }
 }
 
+#[derive(Debug)]
 pub struct Tilt {
     pub color: TiltColor,
     pub fahrenheit: u16,

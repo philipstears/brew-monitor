@@ -289,6 +289,7 @@ dependencies = [
  "async-std",
  "bluez",
  "bm-bluetooth",
+ "bm-db",
  "bm-grainfather",
  "bm-tilt",
  "btleplug",
@@ -297,7 +298,6 @@ dependencies = [
  "futures",
  "log 0.4.11",
  "pretty_env_logger",
- "rusqlite",
  "rust-embed",
  "serde",
  "serde_json",
@@ -322,6 +322,16 @@ version = "0.1.0"
 dependencies = [
  "byteorder",
  "uuid",
+]
+
+[[package]]
+name = "bm-db"
+version = "0.1.0"
+dependencies = [
+ "bm-tilt",
+ "chrono",
+ "rusqlite",
+ "serde",
 ]
 
 [[package]]

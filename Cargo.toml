@@ -5,6 +5,7 @@ members = [
   "bm-tilt",
   "bm-grainfather",
   "bm-beerxml",
+  "bm-db",
 ]
 
 [patch.crates-io]

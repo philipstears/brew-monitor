@@ -4,14 +4,13 @@ pub use bluetooth_discovery::*;
 mod devices;
 use devices::gf_manager::GrainfatherManager;
 
-mod data;
-use data::DB;
-
 mod web;
 
+use bm_db::DB;
 use bm_tilt::*;
 use chrono::prelude::*;
 use dht22_pi as dht22;
+use log::error;
 use std::{
     collections::HashMap,
     sync::{mpsc, Arc, RwLock},
@@ -40,7 +39,7 @@ pub async fn main() {
     let (discovery_sender, discovery_receiver) = mpsc::channel();
 
     let dht22_monitor = {
-        let db = db.clone();
+        let garage = db.get_dht22("garage".into());
 
         tokio::spawn(async move {
             loop {
@@ -51,11 +50,14 @@ pub async fn main() {
                     }) => {
                         let now = Utc::now();
                         println!("at={:?} celsius={:?} humidity={:?}", now, temperature, humidity);
-                        db.insert_dht22_reading(
-                            "garage".into(),
-                            (temperature * 100.0) as u16,
-                            (humidity * 100.0) as u16,
-                        );
+
+                        if let Err(err) = garage.insert_reading((temperature * 100.0) as u16, (humidity * 100.0) as u16)
+                        {
+                            error!(
+                                "Unable to insert dht22 reading for {} with temperature {} and humidity {}: {:?}",
+                                "garage", temperature, humidity, err,
+                            );
+                        }
                     }
                     Err(err) => {
                         let now = Utc::now();
@@ -85,7 +87,10 @@ pub async fn main() {
                             now, tilt.color, centi_celsius, tilt.gravity
                         );
 
-                        db.insert_tilt_reading(&tilt);
+                        // TODO: cache tilts
+                        if let Err(err) = db.get_tilt(&tilt.color).insert_reading(tilt.fahrenheit, tilt.gravity) {
+                            error!("Unable to insert tilt reading {:?}: {:?}", tilt, err);
+                        }
 
                         tilts.write().unwrap().insert(tilt.color, DeviceInfo::new(now, tilt));
                     }

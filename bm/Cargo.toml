@@ -24,6 +24,7 @@ tokio = { version = "0.2", features = ["full", "time"] }
 warp-embed = "0.1.2"
 rust-embed = "5.6.0"
 
+bm-db = { path = "../bm-db" }
 bm-bluetooth = { path = "../bm-bluetooth" }
 bm-tilt = { path = "../bm-tilt" }
 bm-grainfather = { path = "../bm-grainfather" }
@@ -31,10 +32,6 @@ bm-grainfather = { path = "../bm-grainfather" }
 [dependencies.bluez]
 git = "https://github.com/laptou/bluez-rs"
 branch = "master"
-
-[dependencies.rusqlite]
-version = "0.24.2"
-features = ["chrono"]
 
 [dependencies.dht22_pi]
 version = "0.3.0"
