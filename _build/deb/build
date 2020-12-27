@@ -8,12 +8,15 @@ declare -r G_PREV=1
 
 declare -r G_DEB_NAME=${G_PNAME}_${G_PVER}-${G_PREV}
 
+declare -r G_RUST_ARCH=armv7-unknown-linux-gnueabihf
+declare -r G_DEB_ARCH=armhf
+
 main() {
     local this_dir=
     local build_dir=
 
     this_dir=$(dirname "${BASH_SOURCE[0]}")
-    build_dir=$(readlink --canonicalize "${this_dir}/../../target/aarch64-unknown-linux-gnu/debug/")
+    build_dir=$(readlink --canonicalize "${this_dir}/../../target/${G_RUST_ARCH}/debug/")
 
     local tmp_dir=
     tmp_dir=$(mktemp -d "bm-deb-tmp.XXXX" --tmpdir)
@@ -44,7 +47,7 @@ Package: brew-monitor
 Version: ${G_PVER}-${G_PREV}
 Section: base
 Priority: optional
-Architecture: aarch64
+Architecture: ${G_DEB_ARCH}
 Depends:
 Maintainer: Philip Stears <philip@philipstears.com>
 Description: Brew Monitor - control and monitoring of
@@ -57,7 +60,7 @@ build() {
     local build_dir=${1}
     local layout_dir=${2}
 
-    dpkg-deb --build "${layout_dir}" "${build_dir}/${G_DEB_NAME}.deb"
+    dpkg-deb --build "${layout_dir}" "${build_dir}/${G_DEB_NAME}_${G_DEB_ARCH}.deb"
 }
 
 main "${@}"

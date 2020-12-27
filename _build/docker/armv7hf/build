@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+main() {
+	cd "$(dirname "${BASH_SOURCE[0]}")"
+	docker build -t brew-monitor/armv7hf-latest .
+}
+
+main "${@}"
+
