@@ -35,3 +35,7 @@ bm-grainfather = { path = "../bm-grainfather" }
 [dependencies.bluez]
 git = "https://github.com/laptou/bluez-rs"
 branch = "master"
+
+[package.metadata.deb]
+maintainer-scripts = "debian/"
+systemd-units = { enable = false }
