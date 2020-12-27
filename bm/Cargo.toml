@@ -44,3 +44,4 @@ systemd-units = { enable = false }
 assets = [
     ["target/release/bm", "/usr/local/bin/bm", "755"],
 ]
+depends = "adduser"

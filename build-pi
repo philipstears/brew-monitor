@@ -2,7 +2,11 @@
 set -euo pipefail
 set -x
 
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
 cross build --target armv7-unknown-linux-gnueabihf --release
 
-cargo deb -v --no-build --target armv7-unknown-linux-gnueabihf -p bm --no-strip
+cd bm
+
+cargo deb -v --no-build --target armv7-unknown-linux-gnueabihf --no-strip
 
