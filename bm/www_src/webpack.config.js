@@ -23,12 +23,12 @@ module.exports = {
         extensions: [ '.tsx', '.ts', '.js' ],
     },
     output: {
-        filename: 'bundle.js',
+        filename: 'bm.js',
         path: path.resolve(__dirname, '..', 'www'),
     },
     plugins: [
         new MiniCssExtractPlugin({
-            filename: "index.css",
+            filename: "bm.css",
         }),
         new HtmlWebpackPlugin({
             template: path.resolve(__dirname, "index.html"),

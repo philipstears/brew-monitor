@@ -259,3 +259,5 @@ button {
 .progress-bar-label {
     text-align: center;
 }
+
+@import url("./app/app.css");
