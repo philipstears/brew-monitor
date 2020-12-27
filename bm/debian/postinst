@@ -10,7 +10,7 @@ create_user() {
         return
     fi
 
-    adduser --system --home "${BM_HOME}" --group "${BM_USER}"
+    adduser --system --home "${BM_HOME}" --group "${BM_USER}" --groups "gpio"
 }
 
 
