@@ -1,0 +1,26 @@
+Readings for tilt
+Readings for dht22
+Unwrap review
+DismissBoilAlert -> DismissAlert
+DelayedHeatTimer -> Timer
+Update all units
+New units library for celsius (in terms of signed centi-celcius - isize) and fahrenheit (isize)
+Documentation of step numbers
+Finish the recipe stuff
+Device list
+Factor out common React stuff (dialogs, panes?)
+Move many react things to stateless components?
+Linting for UI code?
+Split and sort out CSS, maybe adopt sass
+Mobile friendly UI
+Hydrometer adjustment calc
+Water addition calc
+Use brewfather / grainfather APIs to download recipes?
+Auto-disable heating during sparge?
+Move some of the client-side intelligence to the server? - e.g. classification of current step as Mash In, Mash, Sparge, Boil.
+Sort out the boil/sparge alert stuff
+Grainfather ids should be bytes, not u128s
+
+WebSocket - should there just be one? if it's just for gf, maybe it should be SSE?
+
+The big one - bluetooth?
