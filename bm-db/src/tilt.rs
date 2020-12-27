@@ -17,6 +17,8 @@ pub struct TiltData {
 }
 
 impl TiltData {
+    const READINGS_LAST_MINUTE: &'static str = "select strftime('%Y-%m-%d %H:%M', \"when\") as at,cast(round(avg(temperature)) as integer) as temperature,cast(round(avg(gravity)) as integer) as gravity from tilt_readings where datetime(\"when\") >= datetime('now', '-24 hours') group by at";
+
     pub(super) fn new(connection: Arc<Mutex<Connection>>, color: TiltColor) -> Self {
         Self {
             color: color.to_string(),
@@ -47,6 +49,24 @@ impl TiltData {
         )?;
 
         Ok(())
+    }
+
+    pub fn get_readings(&self) -> Result<Vec<TiltReading>> {
+        // Present a by-minute average to the caller
+        let connection = self.connection();
+        let mut statement = connection.prepare(Self::READINGS_LAST_MINUTE)?;
+
+        let readings = statement
+            .query_map(params![], |row| {
+                Ok(TiltReading {
+                    at: row.get(0)?,
+                    fahrenheit: row.get(1)?,
+                    gravity: row.get(2)?,
+                })
+            })?
+            .collect();
+
+        readings
     }
 
     fn connection(&self) -> MutexGuard<Connection> {

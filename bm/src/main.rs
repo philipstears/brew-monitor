@@ -30,7 +30,7 @@ pub async fn main() {
     let routes = {
         let web_content = web::assets::route();
         let gf_route = web::gf::route(gf.clone());
-        let tilt_route = web::tilt::route(tilts.clone());
+        let tilt_route = web::tilt::route(db.clone(), tilts.clone());
         web_content.or(tilt_route).or(gf_route)
     };
 

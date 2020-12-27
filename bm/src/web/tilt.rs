@@ -1,4 +1,5 @@
 use crate::DeviceInfo;
+use bm_db::DB;
 use bm_tilt::{Tilt, TiltColor};
 use std::{
     collections::HashMap,
@@ -7,11 +8,15 @@ use std::{
 use warp::{reject::Rejection, reply::Reply, Filter};
 
 pub fn route(
+    db: DB,
     tilts: Arc<RwLock<HashMap<TiltColor, DeviceInfo<Tilt>>>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    let tilts = tilts.clone();
+    let readings = warp::path!("tilt" / TiltColorParam / "all").map(move |color: TiltColorParam| {
+        let readings = db.get_tilt(color.color()).get_readings().unwrap();
+        Ok(warp::reply::json(&readings))
+    });
 
-    warp::path!("tilt" / TiltColorParam).and_then(move |color: TiltColorParam| {
+    let single = warp::path!("tilt" / TiltColorParam).and_then(move |color: TiltColorParam| {
         let tilts = tilts.clone();
 
         async move {
@@ -23,7 +28,9 @@ pub fn route(
                 Err(warp::reject::not_found())
             }
         }
-    })
+    });
+
+    readings.or(single)
 }
 
 struct TiltColorParam(TiltColor);
