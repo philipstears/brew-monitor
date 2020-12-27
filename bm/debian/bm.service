@@ -8,7 +8,8 @@ WorkingDirectory=/home/pi/
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
-User=pi
+User=brew-monitor
+CapabilityBoundingSet=cap_net_raw+ep
 
 [Install]
 WantedBy=multi-user.target
