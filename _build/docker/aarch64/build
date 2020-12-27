@@ -3,7 +3,7 @@ set -euo pipefail
 
 main() {
 	cd "$(dirname "${BASH_SOURCE[0]}")"
-	docker build -t brew-monitor/pi-latest .
+	docker build -t brew-monitor/aarch64-unknown-linux-gnu:latest .
 }
 
 main "${@}"
