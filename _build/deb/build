@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+set -x
+
+declare -r G_PNAME=brew-monitor
+declare -r G_PVER=1.0
+declare -r G_PREV=1
+
+declare -r G_DEB_NAME=${G_PNAME}_${G_PVER}-${G_PREV}
+
+main() {
+    local this_dir=
+    local build_dir=
+
+    this_dir=$(dirname "${BASH_SOURCE[0]}")
+    build_dir=$(readlink --canonicalize "${this_dir}/../../target/aarch64-unknown-linux-gnu/debug/")
+
+    local tmp_dir=
+    tmp_dir=$(mktemp -d "bm-deb-tmp.XXXX" --tmpdir)
+
+    local layout_dir=${tmp_dir}/${G_DEB_NAME}
+    mkdir -p "${layout_dir}"
+
+    layout "${build_dir}" "${layout_dir}"
+    build "${build_dir}" "${layout_dir}"
+
+    # rm -rf "${tmp_dir}"
+}
+
+layout() {
+    local build_dir=${1}
+    local layout_dir=${2}
+
+    local -r bin_dir=${layout_dir}/usr/local/bin
+    local -r meta_dir=${layout_dir}/DEBIAN
+
+    mkdir -p "${bin_dir}"
+    mkdir -p "${meta_dir}"
+
+    cp "${build_dir}/bm" "${bin_dir}"
+
+    cat >"${meta_dir}/control" <<END
+Package: brew-monitor
+Version: ${G_PVER}-${G_PREV}
+Section: base
+Priority: optional
+Architecture: aarch64
+Depends:
+Maintainer: Philip Stears <philip@philipstears.com>
+Description: Brew Monitor - control and monitoring of
+ your home brewery, including your Grainfather G30, and
+ any Tilt devices.
+END
+}
+
+build() {
+    local build_dir=${1}
+    local layout_dir=${2}
+
+    dpkg-deb --build "${layout_dir}" "${build_dir}/${G_DEB_NAME}.deb"
+}
+
+main "${@}"
