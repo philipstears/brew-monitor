@@ -298,6 +298,7 @@ dependencies = [
  "futures",
  "log 0.4.11",
  "pretty_env_logger",
+ "rppal",
  "rust-embed",
  "serde",
  "serde_json",

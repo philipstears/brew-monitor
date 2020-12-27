@@ -59,6 +59,12 @@ pub async fn main() {
                             );
                         }
                     }
+
+                    Err(dht22::ReadingError::Gpio(rppal::gpio::Error::UnknownModel)) => {
+                        error!("Unable to read DHT22 on pin {}, we can't determine the model of raspberry pi, perhaps this isn't one?", PIN);
+                        return;
+                    }
+
                     Err(err) => {
                         let now = Utc::now();
                         eprintln!("at={:?} error={:?}", now, err);
@@ -70,14 +76,38 @@ pub async fn main() {
         })
     };
 
-    let disco = tokio::spawn(async move { BluetoothDiscovery::run(discovery_sender).await.unwrap() });
+    let disco = tokio::spawn(async move {
+        match BluetoothDiscovery::run(discovery_sender).await {
+            Ok(()) => {}
+
+            Err(bluez::Error::CommandError {
+                opcode: bluez::interface::Command::StartServiceDiscovery,
+                status: bluez::interface::CommandStatus::PermissionDenied,
+            }) => {
+                error!("Unable to start bluetooth discovery because permission was denied, make sure the permissions are properly enabled.");
+            }
+
+            Err(other) => {
+                error!("Unable to start bluetooth discovery for an unknown reason: {:?}", other);
+            }
+        }
+    });
 
     let disco_processor = {
         let db = db.clone();
 
         tokio::spawn(async move {
             loop {
-                match discovery_receiver.recv().unwrap() {
+                let event = match discovery_receiver.recv() {
+                    Ok(event) => event,
+
+                    Err(std::sync::mpsc::RecvError) => {
+                        // The discovery process has gone down, this will be logged elsewhere
+                        return;
+                    }
+                };
+
+                match event {
                     BluetoothDiscoveryEvent::DiscoveredTilt(tilt) => {
                         let now = Utc::now();
                         let centi_celsius = ((i32::from(tilt.fahrenheit) - 32) * 500) / 9;

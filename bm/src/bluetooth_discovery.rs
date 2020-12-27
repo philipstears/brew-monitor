@@ -1,5 +1,5 @@
 use log::info;
-use std::{convert::TryFrom, error::Error, sync::mpsc::Sender};
+use std::{convert::TryFrom, sync::mpsc::Sender};
 
 use bm_bluetooth::*;
 use bm_grainfather;
@@ -35,7 +35,7 @@ pub struct BluetoothDiscovery<'z> {
 }
 
 impl<'z> BluetoothDiscovery<'z> {
-    pub async fn run(sender: Sender<BluetoothDiscoveryEvent>) -> Result<(), Box<dyn Error>> {
+    pub async fn run(sender: Sender<BluetoothDiscoveryEvent>) -> Result<(), bluez::Error> {
         let mut bluez_client = BlueZClient::new().unwrap();
 
         let bluez_controllers = bluez_client.get_controller_list().await.unwrap();
@@ -78,7 +78,7 @@ impl<'z> BluetoothDiscovery<'z> {
         state.run_prime().await
     }
 
-    async fn run_prime(mut self) -> Result<(), Box<dyn Error>> {
+    async fn run_prime(mut self) -> Result<(), bluez::Error> {
         self.start_discovery().await?;
 
         loop {
@@ -136,7 +136,7 @@ impl<'z> BluetoothDiscovery<'z> {
         }
     }
 
-    async fn start_discovery(&mut self) -> Result<(), Box<dyn Error>> {
+    async fn start_discovery(&mut self) -> Result<(), bluez::Error> {
         const TX_LEVEL: i8 = 127;
 
         self.bluez_client
