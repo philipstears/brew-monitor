@@ -1,4 +1,4 @@
-use super::command::{finish_command, Command, COMMAND_LEN};
+use super::command::{finish_command, COMMAND_LEN};
 use std::fmt::Write;
 
 /// The amount of time to wait before automatically starting a recipe.

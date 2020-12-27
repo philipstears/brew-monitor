@@ -6,7 +6,7 @@ use bm_grainfather;
 use bm_grainfather::btleplug::Client as GrainfatherClient;
 use bm_tilt::*;
 
-use ::btleplug::api::{Central, Peripheral};
+use ::btleplug::api::Central;
 use async_std::task::block_on;
 use bluez::{
     client::*,
