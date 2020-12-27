@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+set -x
+
+cross build --target armv7-unknown-linux-gnueabihf --release
+
+cargo deb --no-build --target armv7-unknown-linux-gnueabih -p bm --no-strip
+
