@@ -9,7 +9,7 @@ StandardOutput=inherit
 StandardError=inherit
 Restart=always
 User=brew-monitor
-CapabilityBoundingSet=cap_net_raw cap_net_admin+eip
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN+EIP
 
 [Install]
 WantedBy=multi-user.target
