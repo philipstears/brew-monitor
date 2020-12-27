@@ -10,7 +10,7 @@ StandardError=inherit
 Restart=always
 User=brew-monitor
 CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN CAP_SYS_NICE
-AmbientCapabilities=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_NICE
 
 [Install]
 WantedBy=multi-user.target
