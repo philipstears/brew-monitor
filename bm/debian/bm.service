@@ -10,7 +10,8 @@ StandardError=inherit
 Restart=always
 User=brew-monitor
 CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN CAP_SYS_NICE
-AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_NICE
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN CAP_SYS_NICE
+SupplementaryGroups=gpio
 
 [Install]
 WantedBy=multi-user.target

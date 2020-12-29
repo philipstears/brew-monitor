@@ -12,9 +12,6 @@ create_user() {
 
     # Create the system user
     adduser --system --home "${BM_HOME}" --group "${BM_USER}"
-
-    # Make it a part of the gpio group
-    adduser "${BM_USER}" gpio
 }
 
 
