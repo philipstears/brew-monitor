@@ -34,6 +34,6 @@ export class HeatSpargeWaterModal extends React.Component<HeatSpargeWaterModalPr
     );
 
     handleDismissAlert = async () => {
-        await this.props.client.dismissBoilAlert();
+        await this.props.client.dismissAlert();
     };
 }

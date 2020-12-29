@@ -159,19 +159,18 @@ struct State {
 
 impl State {
     fn handle_command(&mut self, command: &Command) -> Option<ManagerOrClientNotification> {
-        let maybe_dismiss_alert =
-            match command {
-                Command::DismissBoilAdditionAlert => true,
-                Command::PressSet => true,
-                _ => false,
-            };
+        let maybe_dismiss_alert = match command {
+            Command::DismissAlert => true,
+            Command::PressSet => true,
+            _ => false,
+        };
 
         if maybe_dismiss_alert {
             if self.sparge_water_alert_active {
                 return Some(self.update_sparge_water_alert_status(false));
             }
 
-            if self.boil_alert_active{
+            if self.boil_alert_active {
                 return Some(self.update_boil_alert_status(false));
             }
         }
@@ -213,10 +212,7 @@ impl State {
                 // Send out boil addition alerts with each status alert
                 // TODO: if we stored the recipe, we could work out whether we were in the boil,
                 // and only send them then
-                return Some(vec![
-                    self.build_boil_status(),
-                    self.build_sparge_water_status(),
-                ]);
+                return Some(vec![self.build_boil_status(), self.build_sparge_water_status()]);
             }
 
             Notification::Status2(Status2 {
@@ -299,9 +295,11 @@ impl State {
     }
 
     fn build_sparge_water_status(&self) -> ManagerOrClientNotification {
-        ManagerOrClientNotification::ManagerNotification(ManagerNotification::HeatSpargeWaterAlertState(HeatSpargeWaterAlertState {
-            visible: self.sparge_water_alert_active,
-        }))
+        ManagerOrClientNotification::ManagerNotification(ManagerNotification::HeatSpargeWaterAlertState(
+            HeatSpargeWaterAlertState {
+                visible: self.sparge_water_alert_active,
+            },
+        ))
     }
 }
 

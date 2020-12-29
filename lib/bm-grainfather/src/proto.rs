@@ -75,4 +75,12 @@ impl ToString for InteractionCode {
 // TODO: what is the value here?
 pub type SpargeProgress = u8;
 
+/// Represents the step in a recipe.
+///
+/// - If the controller isn't in a recipe, the step number will be zero.
+/// - If the controller has a recipe active, and in delayed start mode, the step number is zero.
+/// - Step 1 through Step N represent mash steps' 1 through N.
+/// - Step N + 1 is the sparge step.
+/// - Step N + 2 is the boil step.
+/// - Step N + 3 is used to indicate that the boil is done.
 pub type StepNumber = u8;

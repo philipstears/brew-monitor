@@ -63,9 +63,16 @@ pub enum Command {
     SetTargetTemperature(f64),
     SetLocalBoilTemperature(f64),
 
-    DismissBoilAdditionAlert,
+    /// Dismisses the active alert - e.g. the heat sparge water alert, or
+    /// a boil addition alert. These alerts can also be dismissed by
+    /// sending a `PressSet` command.
+    DismissAlert,
+
     CancelOrFinishSession,
+
+    /// Behaves as if the set button were pressed on the controller.
     PressSet,
+
     DisableSpargeWaterAlert,
     ResetRecipeInterrupted,
     Disconnect(DisconnectOption),
@@ -80,6 +87,11 @@ pub enum Command {
         // TODO: is this actually minutes?
         time_minutes: u8,
     },
+
+    /// When issues, skips to the given step. This can
+    /// also be used to skip ramping the temperature by
+    /// using the same step number as the active step,
+    /// and setting the `skip_ramp` field to true.
     SkipToStep {
         step_number: StepNumber,
         can_edit_minutes: u8,
@@ -213,7 +225,7 @@ impl Command {
                 output.push(',');
             }
 
-            Self::DismissBoilAdditionAlert => {
+            Self::DismissAlert => {
                 output.push('A');
                 output.push(',');
             }

@@ -89,9 +89,9 @@ export class Client {
         });
     }
 
-    async dismissBoilAlert() {
+    async dismissAlert() {
         await this.command({
-            type: "DismissBoilAdditionAlert",
+            type: "DismissAlert",
         });
     }
 

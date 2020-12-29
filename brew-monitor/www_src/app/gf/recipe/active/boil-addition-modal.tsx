@@ -34,6 +34,6 @@ export class BoilAdditionModal extends React.Component<BoilAdditionModalProps, {
     );
 
     handleDismissBoilAlert = async () => {
-        await this.props.client.dismissBoilAlert();
+        await this.props.client.dismissAlert();
     };
 }
