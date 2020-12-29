@@ -33,7 +33,6 @@ in
       rustracer
       nodejs
       sqlite
-      dpkg
     ];
 
     RUST_SRC_PATH = "${rust}/lib/rustlib/src/rust/src";
