@@ -8,7 +8,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../"
 
 cross build --target "${RUST_TRIPLE}" --release
 
-cd bm
+cd brew-monitor
 
 cargo deb -v --no-build --target "${RUST_TRIPLE}" --no-strip
 

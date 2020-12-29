@@ -283,32 +283,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bm"
-version = "0.1.0"
-dependencies = [
- "async-std",
- "bluez",
- "bm-bluetooth",
- "bm-db",
- "bm-grainfather",
- "bm-tilt",
- "btleplug",
- "chrono",
- "dht22_pi",
- "futures",
- "log 0.4.11",
- "pretty_env_logger",
- "rppal",
- "rust-embed",
- "serde",
- "serde_json",
- "tokio",
- "uuid",
- "warp",
- "warp-embed",
-]
-
-[[package]]
 name = "bm-beerxml"
 version = "0.1.0"
 dependencies = [
@@ -351,6 +325,32 @@ version = "0.1.0"
 dependencies = [
  "bm-bluetooth",
  "uuid",
+]
+
+[[package]]
+name = "brew-monitor"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "bluez",
+ "bm-bluetooth",
+ "bm-db",
+ "bm-grainfather",
+ "bm-tilt",
+ "btleplug",
+ "chrono",
+ "dht22_pi",
+ "futures",
+ "log 0.4.11",
+ "pretty_env_logger",
+ "rppal",
+ "rust-embed",
+ "serde",
+ "serde_json",
+ "tokio",
+ "uuid",
+ "warp",
+ "warp-embed",
 ]
 
 [[package]]

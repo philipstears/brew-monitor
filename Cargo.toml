@@ -1,11 +1,11 @@
 [workspace]
 members = [
-  "bm",
-  "bm-bluetooth",
-  "bm-tilt",
-  "bm-grainfather",
-  "bm-beerxml",
-  "bm-db",
+  "brew-monitor",
+  "lib/bm-bluetooth",
+  "lib/bm-tilt",
+  "lib/bm-grainfather",
+  "lib/bm-beerxml",
+  "lib/bm-db",
 ]
 
 [patch.crates-io]

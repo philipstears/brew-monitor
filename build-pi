@@ -11,4 +11,4 @@ docker run \
     -w "$PWD" \
     -ti \
     brew-monitor/host:latest \
-    bash -l -c _build/build-core
+    bash -l -c build-support/build-core
