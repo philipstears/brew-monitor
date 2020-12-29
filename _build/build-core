@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+set -x
+
+declare -r RUST_TRIPLE=armv7-unknown-linux-gnueabihf
+
+cd "$(dirname "${BASH_SOURCE[0]}")/../"
+
+cross build --target "${RUST_TRIPLE}" --release
+
+cd bm
+
+cargo deb -v --no-build --target "${RUST_TRIPLE}" --no-strip
+

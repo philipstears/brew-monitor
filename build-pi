@@ -4,9 +4,11 @@ set -x
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-cross build --target armv7-unknown-linux-gnueabihf --release
-
-cd bm
-
-cargo deb -v --no-build --target armv7-unknown-linux-gnueabihf --no-strip
-
+docker run \
+    --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v "$PWD:$PWD" \
+    -w "$PWD" \
+    -ti \
+    brew-monitor/host:latest \
+    bash -l -c _build/build-core

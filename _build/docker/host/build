@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+main() {
+	cd "$(dirname "${BASH_SOURCE[0]}")"
+
+	docker build \
+        --tag brew-monitor/host:latest \
+        --build-arg "BUILD_USER_UID=$(id -u)" \
+        --build-arg "BUILD_USER_GID=$(id -g)" \
+        --build-arg "DOCKER_GID=$(getent group docker | awk 'BEGIN { FS=":" } { print $3 }')" \
+        .
+}
+
+main "${@}"
+
