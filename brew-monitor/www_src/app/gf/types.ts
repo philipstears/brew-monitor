@@ -92,7 +92,7 @@ export interface TempData {
 }
 
 export interface TimerNotification {
-    type: "DelayedHeatTimer";
+    type: "Timer";
     data: TimerData;
 }
 

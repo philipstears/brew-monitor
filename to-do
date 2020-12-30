@@ -2,7 +2,7 @@
 [ ] Readings for dht22
 [ ] Unwrap review
 [X] DismissBoilAlert -> DismissAlert
-[ ] DelayedHeatTimer -> Timer
+[X] DelayedHeatTimer -> Timer
 [ ] Update all units
 [ ] New units library for celsius (in terms of signed centi-celcius - isize) and fahrenheit (isize)
 [X] Documentation of step numbers

@@ -249,7 +249,7 @@ impl State {
                 self.temp_current = (current * 100.0) as i32;
             }
 
-            Notification::DelayedHeatTimer(Timer {
+            Notification::Timer(Timer {
                 active,
                 ..
             }) => {

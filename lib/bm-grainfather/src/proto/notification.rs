@@ -30,7 +30,7 @@ pub enum Notification {
     Temp(Temp),
 
     /// Indicates the status of the active timer on the controller.
-    DelayedHeatTimer(Timer),
+    Timer(Timer),
 
     /// Provides a collection of related status information - this is the
     /// controller's "Y" status report.
@@ -100,7 +100,7 @@ impl TryFrom<&[u8]> for Notification {
                 let remaining_minutes = ndata_fields.next().unwrap().parse().unwrap();
                 let total_start_time = ndata_fields.next().unwrap().parse().unwrap();
                 let remaining_seconds = ndata_fields.next().unwrap().parse().unwrap();
-                Ok(Self::DelayedHeatTimer(Timer {
+                Ok(Self::Timer(Timer {
                     active,
                     remaining_minutes,
                     remaining_seconds,
