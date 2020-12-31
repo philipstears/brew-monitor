@@ -268,7 +268,7 @@ dependencies = [
 [[package]]
 name = "bluez"
 version = "0.1.3"
-source = "git+https://github.com/laptou/bluez-rs?branch=master#16f02acef7c2beddbeccf9ff0e29d53c17013d6a"
+source = "git+https://github.com/laptou/bluez-rs#16f02acef7c2beddbeccf9ff0e29d53c17013d6a"
 dependencies = [
  "async-std",
  "bitvec",
