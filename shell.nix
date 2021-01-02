@@ -12,8 +12,10 @@ let
       ];
     };
 
+  rustChannel = nixPackages.latest.rustChannels.stable;
+
   rust =
-    (nixPackages.latest.rustChannels.stable.rust.override {
+    (rustChannel.rust.override {
       extensions = [
         "rust-src"
         "rls-preview"
@@ -35,6 +37,6 @@ in
       sqlite
     ];
 
-    RUST_SRC_PATH = "${rust}/lib/rustlib/src/rust/src";
+    RUST_SRC_PATH = "${rustChannel.rust-src}/lib/rustlib/src/rust/src";
     RACER_PATH = "${rustracer}/bin/racer";
   }
