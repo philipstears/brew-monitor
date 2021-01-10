@@ -38,7 +38,10 @@ in
       rust
       rustracer
       nodejs
-      sqlite
+      (sqlite.override {
+        inherit readline ncurses;
+        interactive = true;
+      })
     ];
 
     RUST_SRC_PATH = "${rustChannel.rust-src}/lib/rustlib/src/rust/src";
