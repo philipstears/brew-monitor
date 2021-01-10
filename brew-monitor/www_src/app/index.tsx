@@ -6,14 +6,13 @@ import {
     HashRouter as Router,
     Switch,
     Route,
-    Link,
-    useParams
+    useParams,
 } from "react-router-dom";
 
 export interface AppProps {
 }
 
-export const App = (props: AppProps) => (
+export const App = (_props: AppProps) => (
     <Router>
         <Switch>
             <Route path="/tilt/:color/">

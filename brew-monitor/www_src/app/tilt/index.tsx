@@ -1,12 +1,18 @@
 import * as React from "react";
 import Chart from "react-apexcharts";
 
+function useQuery(): URLSearchParams {
+  return new URLSearchParams(window.location.search);
+}
+
 export interface TiltProps {
     color: string;
 }
 
 export interface TiltState {
     data: ChartDatum[],
+    from: string | null,
+    to: string | null;
 }
 
 export interface ChartDatum {
@@ -22,9 +28,13 @@ export interface Reading {
 
 export class Tilt extends React.Component<TiltProps, TiltState> {
     constructor(props: TiltProps) {
+        let query = useQuery();
+
         super(props);
         this.state = {
             data: [],
+            from: query.get("from"),
+            to: query.get("to"),
         };
         this.refreshTiltData();
     }
@@ -89,7 +99,7 @@ export class Tilt extends React.Component<TiltProps, TiltState> {
     }
 
     private async refreshTiltData() {
-        const url = `${window.location.protocol}//${window.location.host}/tilt/${this.props.color}?from=2020-12-21T03:00:00Z&to=2020-12-22T03:00:00Z`;
+        const url = `${window.location.protocol}//${window.location.host}/tilt/${this.props.color}?from=${this.state.from}&to=${this.state.to}`;
 
         let response =
             await fetch(url, {
