@@ -15,20 +15,6 @@ impl DHT22Data {
         }
     }
 
-    pub(super) fn create_table(connection: &Connection) -> Result<()> {
-        connection.execute(
-            "create table if not exists dht22_readings (
-                 \"when\" text primary key,
-                 which text not null,
-                 temperature integer not null,
-                 humidity integer not null
-             )",
-            NO_PARAMS,
-        )?;
-
-        Ok(())
-    }
-
     pub fn insert_reading(&self, temperature: u16, humidity: u16) -> Result<()> {
         let when = chrono::Utc::now().naive_utc();
 

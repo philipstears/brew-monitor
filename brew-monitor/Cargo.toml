@@ -14,7 +14,7 @@ pretty_env_logger = "0.4.0"
 
 async-std = { version = "1.4", features = ["attributes"] }
 uuid = "0.8.1"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 btleplug = "0.5.4"
 futures = "0.3"
 

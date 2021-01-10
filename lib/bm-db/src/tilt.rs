@@ -1,11 +1,12 @@
 use bm_tilt::TiltColor;
+use chrono::{DateTime, TimeZone, Utc};
 use rusqlite::{params, Connection, Result, NO_PARAMS};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 #[derive(Serialize, Deserialize)]
 pub struct TiltReading {
-    pub at: String,
+    pub at: DateTime<Utc>,
     pub fahrenheit: u16,
     pub gravity: u16,
 }
@@ -17,8 +18,6 @@ pub struct TiltData {
 }
 
 impl TiltData {
-    const READINGS_LAST_MINUTE: &'static str = "select strftime('%Y-%m-%d %H:%M', \"when\") as at,cast(round(avg(temperature)) as integer) as temperature,cast(round(avg(gravity)) as integer) as gravity from tilt_readings where datetime(\"when\") >= datetime('now', '-24 hours') group by at";
-
     pub(super) fn new(connection: Arc<Mutex<Connection>>, color: TiltColor) -> Self {
         Self {
             color: color.to_string(),
@@ -26,40 +25,26 @@ impl TiltData {
         }
     }
 
-    pub(super) fn create_table(connection: &Connection) -> Result<()> {
-        connection.execute(
-            "create table if not exists tilt_readings (
-                 \"when\" text primary key,
-                 colour text not null,
-                 temperature integer not null,
-                 gravity integer not null
-             )",
-            NO_PARAMS,
-        )?;
-
-        Ok(())
-    }
-
     pub fn insert_reading(&self, fahrenheit: u16, gravity: u16) -> Result<()> {
-        let when = chrono::Utc::now().naive_utc();
+        let at = Utc::now().timestamp();
 
         self.connection().execute(
-            "INSERT INTO tilt_readings (\"when\", colour, temperature, gravity) values (?1, ?2, ?3, ?4)",
-            params![when, self.color, fahrenheit, gravity],
+            "INSERT INTO tilt_readings (at, which, temp, grav) values (?1, ?2, ?3, ?4)",
+            params![at, self.color, fahrenheit, gravity],
         )?;
 
         Ok(())
     }
 
-    pub fn get_readings(&self) -> Result<Vec<TiltReading>> {
-        // Present a by-minute average to the caller
+    pub fn get_readings(&self, from: DateTime<Utc>, to_excl: DateTime<Utc>) -> Result<Vec<TiltReading>> {
         let connection = self.connection();
-        let mut statement = connection.prepare(Self::READINGS_LAST_MINUTE)?;
+        let mut statement =
+            connection.prepare("select at,temp,grav from tilt_readings where at >= ? and at < ? order by at asc")?;
 
         let readings = statement
-            .query_map(params![], |row| {
+            .query_map(params![from.timestamp(), to_excl.timestamp()], |row| {
                 Ok(TiltReading {
-                    at: row.get(0)?,
+                    at: Utc.timestamp(row.get(0)?, 0),
                     fahrenheit: row.get(1)?,
                     gravity: row.get(2)?,
                 })

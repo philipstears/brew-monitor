@@ -1,20 +1,30 @@
 use crate::DeviceInfo;
 use bm_db::DB;
 use bm_tilt::{Tilt, TiltColor};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
 };
 use warp::{reject::Rejection, reply::Reply, Filter};
 
+#[derive(Deserialize, Serialize)]
+struct ReadingsQuery {
+    from: DateTime<Utc>,
+    to: DateTime<Utc>,
+}
+
 pub fn route(
     db: DB,
     tilts: Arc<RwLock<HashMap<TiltColor, DeviceInfo<Tilt>>>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    let readings = warp::path!("tilt" / TiltColorParam / "all").map(move |color: TiltColorParam| {
-        let readings = db.get_tilt(color.color()).get_readings().unwrap();
-        Ok(warp::reply::json(&readings))
-    });
+    let readings = warp::path!("tilt" / TiltColorParam).and(warp::query::<ReadingsQuery>()).map(
+        move |color: TiltColorParam, query: ReadingsQuery| {
+            let readings = db.get_tilt(color.color()).get_readings(query.from, query.to).unwrap();
+            Ok(warp::reply::json(&readings))
+        },
+    );
 
     let single = warp::path!("tilt" / TiltColorParam).and_then(move |color: TiltColorParam| {
         let tilts = tilts.clone();

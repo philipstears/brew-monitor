@@ -16,7 +16,7 @@ export interface ChartDatum {
 
 export interface Reading {
     at: string,
-    fahrenheit: number,
+    temp: number,
     gravity: number,
 }
 
@@ -89,7 +89,7 @@ export class Tilt extends React.Component<TiltProps, TiltState> {
     }
 
     private async refreshTiltData() {
-        const url = `${window.location.protocol}//${window.location.host}/tilt/${this.props.color}/all`;
+        const url = `${window.location.protocol}//${window.location.host}/tilt/${this.props.color}?from=2020-12-21T03:00:00Z&to=2020-12-22T03:00:00Z`;
 
         let response =
             await fetch(url, {
@@ -103,7 +103,7 @@ export class Tilt extends React.Component<TiltProps, TiltState> {
 
         let data2 = data1.map(({at, gravity}) => (
             {
-                x: new Date(at + ":00").getTime(),
+                x: new Date(at).getTime(),
                 y: gravity,
             }
         ));
