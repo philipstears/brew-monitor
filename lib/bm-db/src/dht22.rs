@@ -8,7 +8,6 @@ use super::WrappedConnection;
 #[derive(Clone)]
 pub struct DHT22Data {
     id: i64,
-    pin: u8,
     connection: WrappedConnection,
 }
 
@@ -23,22 +22,22 @@ impl DHT22Data {
     pub(super) fn try_get(connection: WrappedConnection, name: &str) -> Result<Option<Self>> {
         let result = {
             let connection_guard = connection.lock_or_panic();
-            let mut statement = connection_guard.prepare("select id,pin from dht22_devices where alias = ?")?;
-
-            statement.query_row(params![name], |row| {
-                let id = row.get(0)?;
-                let pin = row.get(1)?;
-                Ok((id, pin))
-            })
+            let mut statement = connection_guard.prepare("select id from dht22_devices where alias = ?")?;
+            statement.query_row(params![name], |row| Ok(row.get(0)?))
         };
 
         result
-            .map(|(id, pin)| Self {
+            .map(|id| Self {
                 connection,
                 id,
-                pin,
             })
             .optional()
+    }
+
+    pub fn get_pin(&self) -> Result<u32> {
+        let connection_guard = self.connection();
+        let mut statement = connection_guard.prepare("select pin from dht22_devices where id = ?")?;
+        statement.query_row(params![self.id], |row| Ok(row.get(0)?))
     }
 
     pub fn insert_reading(&self, temperature: u16, humidity: u16) -> Result<()> {
