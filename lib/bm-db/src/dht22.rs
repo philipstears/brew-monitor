@@ -40,6 +40,21 @@ impl DHT22Data {
             .optional()
     }
 
+    pub fn upsert(&self, info: &DHT22Info) -> Result<()> {
+        let connection = self.0.lock_or_panic();
+
+        connection.execute(
+            "
+            insert into dht22_devices (alias,pin,enabled)
+            values (?,?,?)
+            on conflict(alias) do update set pin=excluded.pin,enabled=excluded.enabled;
+            ",
+            params![info.alias, info.pin, info.enabled],
+        )?;
+
+        Ok(())
+    }
+
     pub fn new_readings_inserter(&self, alias: &str) -> Result<Option<DHT22ReadingsInserter>> {
         let id = {
             let connection_guard = self.0.lock_or_panic();

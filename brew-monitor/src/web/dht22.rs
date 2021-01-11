@@ -25,12 +25,19 @@ pub fn route(db: DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + C
         })
     };
 
-    let put = sensor
-        .and(warp::path::end())
-        .and(warp::filters::method::put())
-        .and(warp::body::content_length_limit(1024))
-        .and(warp::body::json())
-        .map(|_alias, _body: DHT22Info| "Yeah boi!");
+    let put = {
+        let db = db.clone();
+        sensor
+            .and(warp::path::end())
+            .and(warp::filters::method::put())
+            .and(warp::body::content_length_limit(1024))
+            .and(warp::body::json())
+            .map(move |_alias, body: DHT22Info| {
+                db.dht22().upsert(&body).unwrap();
+                // TODO: 204 if it already existed?
+                warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::CREATED)
+            })
+    };
 
     let readings = sensor.and(warp::path!("readings")).and(warp::query::<ReadingsQuery>()).map(
         move |alias: String, query: ReadingsQuery| {
