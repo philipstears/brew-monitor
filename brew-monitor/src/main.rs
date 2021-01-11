@@ -31,7 +31,8 @@ pub async fn main() {
         let web_content = web::assets::route();
         let gf_route = web::gf::route(gf.clone());
         let tilt_route = web::tilt::route(db.clone(), tilts.clone());
-        web_content.or(tilt_route).or(gf_route)
+        let dht22_route = web::dht22::route(db.clone());
+        web_content.or(tilt_route).or(dht22_route).or(gf_route)
     };
 
     let web = warp::serve(routes).run(([0, 0, 0, 0], 30080));
@@ -39,7 +40,8 @@ pub async fn main() {
     let (discovery_sender, discovery_receiver) = mpsc::channel();
 
     let dht22_monitor = {
-        let garage = db.get_dht22("garage".into());
+        let maybe_garage = db.dht22_try_get("garage").unwrap();
+        let garage = maybe_garage.unwrap();
 
         tokio::spawn(async move {
             loop {
@@ -118,7 +120,7 @@ pub async fn main() {
                         );
 
                         // TODO: cache tilts
-                        if let Err(err) = db.get_tilt(&tilt.color).insert_reading(tilt.fahrenheit, tilt.gravity) {
+                        if let Err(err) = db.tilt_ensure(&tilt.color).insert_reading(tilt.fahrenheit, tilt.gravity) {
                             error!("Unable to insert tilt reading {:?}: {:?}", tilt, err);
                         }
 

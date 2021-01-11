@@ -1,6 +1,6 @@
 use bm_tilt::TiltColor;
-use rusqlite::{Connection, NO_PARAMS};
-use std::sync::{Arc, Mutex};
+use rusqlite::Connection;
+use std::sync::{Arc, Mutex, MutexGuard};
 
 mod tilt;
 pub use tilt::*;
@@ -31,7 +31,7 @@ enum Version {
 
 #[derive(Clone)]
 pub struct DB {
-    connection: Arc<Mutex<Connection>>,
+    connection: WrappedConnection,
 }
 
 impl DB {
@@ -41,18 +41,18 @@ impl DB {
         Self::upgrade_db(&connection)?;
 
         let result = Self {
-            connection: Arc::new(Mutex::new(connection)),
+            connection: WrappedConnection::new(connection),
         };
 
         Ok(result)
     }
 
-    pub fn get_tilt(&self, color: &TiltColor) -> TiltData {
+    pub fn tilt_ensure(&self, color: &TiltColor) -> TiltData {
         TiltData::new(self.connection.clone(), *color)
     }
 
-    pub fn get_dht22(&self, name: String) -> DHT22Data {
-        DHT22Data::new(self.connection.clone(), name)
+    pub fn dht22_try_get(&self, name: &str) -> Result<Option<DHT22Data>, rusqlite::Error> {
+        DHT22Data::try_get(self.connection.clone(), name)
     }
 
     /// Recursively updates the database version to the latest.
@@ -83,5 +83,20 @@ impl DB {
             2 => Ok(Version::Alpha2),
             n => Err(OpenError::UnexpectedVersion(n)),
         }
+    }
+}
+
+#[derive(Clone)]
+struct WrappedConnection(Arc<Mutex<Connection>>);
+
+impl WrappedConnection {
+    fn new(connection: Connection) -> Self {
+        Self(Arc::new(Mutex::new(connection)))
+    }
+
+    pub fn lock_or_panic(&self) -> MutexGuard<Connection> {
+        self.0
+            .lock()
+            .unwrap_or_else(|_| unreachable!("The connection mutex has been poisoned, this should not be possible"))
     }
 }

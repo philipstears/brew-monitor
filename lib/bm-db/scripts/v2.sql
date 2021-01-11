@@ -1,5 +1,17 @@
 -- -----------------------------------------------------------------------------
--- DHT22
+-- New
+-- -----------------------------------------------------------------------------
+create table recipes (
+    id integer primary key,
+    alias text not null,
+    recipe text not null
+    );
+
+create unique index idx_recipes_alias
+on recipes (alias);
+
+-- -----------------------------------------------------------------------------
+-- DHT22 Schema Change
 -- -----------------------------------------------------------------------------
 alter table dht22_readings rename to dht22_readings_old;
 
@@ -39,7 +51,7 @@ on dht22_readings_old.which = dht22_devices.alias;
 drop table dht22_readings_old;
 
 -- -----------------------------------------------------------------------------
--- Tilt Readings
+-- Tilt Schema Change
 -- -----------------------------------------------------------------------------
 alter table tilt_readings rename to tilt_readings_old;
 

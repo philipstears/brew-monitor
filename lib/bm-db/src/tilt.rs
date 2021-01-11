@@ -1,8 +1,10 @@
 use bm_tilt::TiltColor;
 use chrono::{DateTime, TimeZone, Utc};
-use rusqlite::{params, Connection, Result, NO_PARAMS};
+use rusqlite::{params, Connection, Result};
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::MutexGuard;
+
+use super::WrappedConnection;
 
 #[derive(Serialize, Deserialize)]
 pub struct TiltReading {
@@ -14,11 +16,11 @@ pub struct TiltReading {
 #[derive(Clone)]
 pub struct TiltData {
     color: String,
-    connection: Arc<Mutex<Connection>>,
+    connection: WrappedConnection,
 }
 
 impl TiltData {
-    pub(super) fn new(connection: Arc<Mutex<Connection>>, color: TiltColor) -> Self {
+    pub(super) fn new(connection: WrappedConnection, color: TiltColor) -> Self {
         Self {
             color: color.to_string(),
             connection,
@@ -38,11 +40,11 @@ impl TiltData {
 
     pub fn get_readings(&self, from: DateTime<Utc>, to_excl: DateTime<Utc>) -> Result<Vec<TiltReading>> {
         let connection = self.connection();
-        let mut statement =
-            connection.prepare("select at,temp,grav from tilt_readings where at >= ? and at < ? order by at asc")?;
+        let mut statement = connection
+            .prepare("select at,temp,grav from tilt_readings where which = ? and at >= ? and at < ? order by at asc")?;
 
         let readings = statement
-            .query_map(params![from.timestamp(), to_excl.timestamp()], |row| {
+            .query_map(params![&self.color, from.timestamp(), to_excl.timestamp()], |row| {
                 Ok(TiltReading {
                     at: Utc.timestamp(row.get(0)?, 0),
                     fahrenheit: row.get(1)?,
@@ -55,8 +57,6 @@ impl TiltData {
     }
 
     fn connection(&self) -> MutexGuard<Connection> {
-        self.connection
-            .lock()
-            .unwrap_or_else(|_| unreachable!("The connection mutex has been poisoned, this should not be possible"))
+        self.connection.lock_or_panic()
     }
 }

@@ -21,7 +21,7 @@ pub fn route(
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let readings = warp::path!("tilt" / TiltColorParam).and(warp::query::<ReadingsQuery>()).map(
         move |color: TiltColorParam, query: ReadingsQuery| {
-            let readings = db.get_tilt(color.color()).get_readings(query.from, query.to).unwrap();
+            let readings = db.tilt_ensure(color.color()).get_readings(query.from, query.to).unwrap();
             Ok(warp::reply::json(&readings))
         },
     );
