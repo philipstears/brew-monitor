@@ -1,15 +1,8 @@
 use chrono::{DateTime, TimeZone, Utc};
-use rusqlite::{params, Connection, OptionalExtension, Result};
+use rusqlite::{params, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
-use std::sync::MutexGuard;
 
 use super::WrappedConnection;
-
-#[derive(Clone)]
-pub struct DHT22Data {
-    id: i64,
-    connection: WrappedConnection,
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct DHT22Reading {
@@ -18,48 +11,62 @@ pub struct DHT22Reading {
     humidity: u16,
 }
 
-impl DHT22Data {
-    pub(super) fn try_get(connection: WrappedConnection, name: &str) -> Result<Option<Self>> {
-        let result = {
-            let connection_guard = connection.lock_or_panic();
-            let mut statement = connection_guard.prepare("select id from dht22_devices where alias = ?")?;
-            statement.query_row(params![name], |row| Ok(row.get(0)?))
-        };
+#[derive(Serialize, Deserialize)]
+pub struct DHT22Info {
+    alias: String,
+    pin: u8,
+    enabled: bool,
+}
 
-        result
-            .map(|id| Self {
-                connection,
-                id,
+#[derive(Clone)]
+pub struct DHT22Data(WrappedConnection);
+
+impl DHT22Data {
+    pub(super) fn new(connection: WrappedConnection) -> Self {
+        Self(connection)
+    }
+
+    pub fn try_get_info(&self, alias: &str) -> Result<Option<DHT22Info>> {
+        let connection_guard = self.0.lock_or_panic();
+        let mut statement = connection_guard.prepare("select pin,enabled from dht22_devices where alias = ?")?;
+        statement
+            .query_row(params![alias], |row| {
+                Ok(DHT22Info {
+                    alias: alias.into(),
+                    pin: row.get(0)?,
+                    enabled: row.get(1)?,
+                })
             })
             .optional()
     }
 
-    pub fn get_pin(&self) -> Result<u32> {
-        let connection_guard = self.connection();
-        let mut statement = connection_guard.prepare("select pin from dht22_devices where id = ?")?;
-        statement.query_row(params![self.id], |row| Ok(row.get(0)?))
+    pub fn new_readings_inserter(&self, alias: &str) -> Result<Option<DHT22ReadingsInserter>> {
+        let id = {
+            let connection_guard = self.0.lock_or_panic();
+            let mut statement = connection_guard.prepare("select id from dht22_devices where alias = ?")?;
+            statement.query_row(params![alias], |row| Ok(row.get(0)?))
+        };
+
+        id.map(|id| DHT22ReadingsInserter::new(self.0.clone(), id)).optional()
     }
 
-    pub fn insert_reading(&self, temperature: u16, humidity: u16) -> Result<()> {
-        let when = chrono::Utc::now().naive_utc();
-
-        self.connection().execute(
-            "INSERT INTO dht22_readings (id, at, temp, humidity) values (?1, ?2, ?3, ?4)",
-            params![self.id, when, temperature, humidity],
-        )?;
-
-        Ok(())
-    }
-
-    pub fn get_readings(&self, from: DateTime<Utc>, to_excl: DateTime<Utc>) -> Result<Vec<DHT22Reading>> {
-        let connection = self.connection();
+    pub fn get_readings(&self, alias: &str, from: DateTime<Utc>, to_excl: DateTime<Utc>) -> Result<Vec<DHT22Reading>> {
+        let connection = self.0.lock_or_panic();
 
         let mut statement = connection.prepare(
-            "select at,temp,humidity from dht22_readings where id = ? and at >= ? and at < ? order by at asc",
+            "
+            select at,temp,humidity from dht22_readings
+            inner join dht22_devices
+            on dht22_devices.id = dht22_readings.id
+            where dht22_devices.alias = ?
+            and at >= ?
+            and at < ?
+            order by at asc
+            ",
         )?;
 
         let readings = statement
-            .query_map(params![self.id, from.timestamp(), to_excl.timestamp()], |row| {
+            .query_map(params![alias, from.timestamp(), to_excl.timestamp()], |row| {
                 Ok(DHT22Reading {
                     at: Utc.timestamp(row.get(0)?, 0),
                     temp: row.get(1)?,
@@ -70,8 +77,29 @@ impl DHT22Data {
 
         readings
     }
+}
 
-    fn connection(&self) -> MutexGuard<Connection> {
-        self.connection.lock_or_panic()
+pub struct DHT22ReadingsInserter {
+    connection: WrappedConnection,
+    id: i64,
+}
+
+impl DHT22ReadingsInserter {
+    fn new(connection: WrappedConnection, id: i64) -> Self {
+        Self {
+            connection,
+            id,
+        }
+    }
+
+    pub fn insert(&self, temperature: u16, humidity: u16) -> Result<()> {
+        let at = chrono::Utc::now().naive_utc();
+
+        self.connection.lock_or_panic().execute(
+            "insert into dht22_readings (id, at, temp, humidity) values (?1, ?2, ?3, ?4)",
+            params![self.id, at, temperature, humidity],
+        )?;
+
+        Ok(())
     }
 }

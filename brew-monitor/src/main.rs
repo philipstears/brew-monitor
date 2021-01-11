@@ -40,7 +40,7 @@ pub async fn main() {
     let (discovery_sender, discovery_receiver) = mpsc::channel();
 
     let dht22_monitor = {
-        let maybe_garage = db.dht22_try_get("garage").unwrap();
+        let maybe_garage = db.dht22().new_readings_inserter("garage").unwrap();
         let garage = maybe_garage.unwrap();
 
         tokio::spawn(async move {
@@ -53,8 +53,7 @@ pub async fn main() {
                         let now = Utc::now();
                         println!("at={:?} celsius={:?} humidity={:?}", now, temperature, humidity);
 
-                        if let Err(err) = garage.insert_reading((temperature * 100.0) as u16, (humidity * 100.0) as u16)
-                        {
+                        if let Err(err) = garage.insert((temperature * 100.0) as u16, (humidity * 100.0) as u16) {
                             error!(
                                 "Unable to insert dht22 reading for {} with temperature {} and humidity {}: {:?}",
                                 "garage", temperature, humidity, err,
@@ -120,7 +119,9 @@ pub async fn main() {
                         );
 
                         // TODO: cache tilts
-                        if let Err(err) = db.tilt_ensure(&tilt.color).insert_reading(tilt.fahrenheit, tilt.gravity) {
+                        if let Err(err) =
+                            db.tilt().new_readings_inserter(&tilt.color).insert(tilt.fahrenheit, tilt.gravity)
+                        {
                             error!("Unable to insert tilt reading {:?}: {:?}", tilt, err);
                         }
 

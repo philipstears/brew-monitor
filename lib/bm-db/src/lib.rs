@@ -1,4 +1,3 @@
-use bm_tilt::TiltColor;
 use rusqlite::Connection;
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -32,6 +31,8 @@ enum Version {
 #[derive(Clone)]
 pub struct DB {
     connection: WrappedConnection,
+    dht22: DHT22Data,
+    tilt: TiltData,
 }
 
 impl DB {
@@ -40,19 +41,23 @@ impl DB {
 
         Self::upgrade_db(&connection)?;
 
+        let wrapped = WrappedConnection::new(connection);
+
         let result = Self {
-            connection: WrappedConnection::new(connection),
+            dht22: DHT22Data::new(wrapped.clone()),
+            tilt: TiltData::new(wrapped.clone()),
+            connection: wrapped,
         };
 
         Ok(result)
     }
 
-    pub fn tilt_ensure(&self, color: &TiltColor) -> TiltData {
-        TiltData::new(self.connection.clone(), *color)
+    pub fn dht22(&self) -> &DHT22Data {
+        &self.dht22
     }
 
-    pub fn dht22_try_get(&self, name: &str) -> Result<Option<DHT22Data>, rusqlite::Error> {
-        DHT22Data::try_get(self.connection.clone(), name)
+    pub fn tilt(&self) -> &TiltData {
+        &self.tilt
     }
 
     /// Recursively updates the database version to the latest.

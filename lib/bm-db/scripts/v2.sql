@@ -18,7 +18,8 @@ alter table dht22_readings rename to dht22_readings_old;
 create table dht22_devices (
     id integer primary key,
     alias text not null,
-    pin integer
+    pin integer,
+    enabled boolean
     );
 
 create unique index idx_dht22_devices_alias
@@ -38,8 +39,8 @@ on dht22_readings (id);
 create index idx_dht22_readings_at
 on dht22_readings (at);
 
-insert into dht22_devices(alias, pin)
-select distinct which, 4
+insert into dht22_devices(alias, pin, enabled)
+select distinct which, 4, true
 from dht22_readings_old;
 
 insert into dht22_readings(at, id, temp, humidity)
