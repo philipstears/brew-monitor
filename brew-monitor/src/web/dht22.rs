@@ -1,7 +1,11 @@
 use bm_db::{DHT22Info, DB};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use warp::{reject::Rejection, reply::Reply, Filter};
+use warp::{
+    reject::Rejection,
+    reply::{Reply, Response},
+    Filter,
+};
 
 #[derive(Deserialize, Serialize)]
 struct ReadingsQuery {
@@ -50,10 +54,10 @@ mod routes {
 mod handlers {
     use super::*;
 
-    pub(super) async fn get(alias: String, db: DB) -> Result<Box<dyn Reply>, Rejection> {
-        let reply: Box<dyn Reply> = match db.dht22().try_get_info(alias.as_str()).unwrap() {
-            Some(dht22) => Box::new(warp::reply::json(&dht22)),
-            None => Box::new(warp::reply::with_status(warp::reply(), warp::http::StatusCode::NOT_FOUND)),
+    pub(super) async fn get(alias: String, db: DB) -> Result<Response, Rejection> {
+        let reply = match db.dht22().try_get_info(alias.as_str()).unwrap() {
+            Some(dht22) => warp::reply::json(&dht22).into_response(),
+            None => warp::reply::with_status(warp::reply(), warp::http::StatusCode::NOT_FOUND).into_response(),
         };
 
         Ok(reply)
