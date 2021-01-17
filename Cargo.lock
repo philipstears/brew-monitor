@@ -320,6 +320,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bm-recipe"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+]
+
+[[package]]
 name = "bm-tilt"
 version = "0.1.0"
 dependencies = [
@@ -333,11 +341,14 @@ version = "0.1.0"
 dependencies = [
  "async-std",
  "bluez",
+ "bm-beerxml",
  "bm-bluetooth",
  "bm-db",
  "bm-grainfather",
+ "bm-recipe",
  "bm-tilt",
  "btleplug",
+ "bytes",
  "chrono",
  "dht22_pi",
  "futures",
@@ -346,6 +357,7 @@ dependencies = [
  "rppal",
  "rust-embed",
  "serde",
+ "serde-xml-rs",
  "serde_json",
  "tokio",
  "uuid",

@@ -1,15 +1,15 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename = "RECIPES")]
-struct Recipes {
+pub struct Recipes {
     #[serde(rename = "RECIPE")]
     pub recipes: Vec<Recipe>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename = "RECIPE")]
-struct Recipe {
+pub struct Recipe {
     #[serde(rename = "NAME")]
     pub name: String,
 
@@ -57,14 +57,14 @@ struct Recipe {
     pub estimated_abv: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Hops {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Hops {
     #[serde(rename = "HOP")]
     pub hops: Vec<Hop>,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Hop {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Hop {
     #[serde(rename = "NAME")]
     pub name: String,
 
@@ -78,8 +78,8 @@ struct Hop {
     pub amount: f64,
 }
 
-#[derive(Serialize, Deserialize)]
-enum HopUse {
+#[derive(Debug, Serialize, Deserialize)]
+pub enum HopUse {
     #[serde(rename = "Boil")]
     Boil,
 
@@ -96,20 +96,20 @@ enum HopUse {
     FirstWort,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Mash {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Mash {
     #[serde(rename = "MASH_STEPS")]
     pub steps: MashSteps,
 }
 
-#[derive(Serialize, Deserialize)]
-struct MashSteps {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MashSteps {
     #[serde(rename = "MASH_STEP")]
     pub steps: Vec<MashStep>,
 }
 
-#[derive(Serialize, Deserialize)]
-struct MashStep {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MashStep {
     #[serde(rename = "NAME")]
     pub name: String,
 

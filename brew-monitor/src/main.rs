@@ -32,7 +32,8 @@ pub async fn main() {
         let gf_route = web::gf::route(gf.clone());
         let tilt_route = web::tilt::route(db.clone(), tilts.clone());
         let dht22_route = web::dht22::route(db.clone());
-        web_content.or(tilt_route).or(dht22_route).or(gf_route)
+        let recipes_route = web::recipes::route(db.clone());
+        web_content.or(tilt_route).or(dht22_route).or(gf_route).or(recipes_route)
     };
 
     let web = warp::serve(routes).run(([0, 0, 0, 0], 30080));

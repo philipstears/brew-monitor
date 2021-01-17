@@ -6,6 +6,7 @@ members = [
   "lib/bm-grainfather",
   "lib/bm-beerxml",
   "lib/bm-db",
+  "lib/bm-recipe",
 ]
 
 [patch.crates-io]

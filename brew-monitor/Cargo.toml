@@ -22,6 +22,7 @@ warp = "0.2.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.60"
 tokio = { version = "0.2", features = ["full", "time"] }
+bytes = "0.5.6"
 
 warp-embed = "0.1.2"
 rust-embed = "5.6.0"
@@ -29,10 +30,15 @@ rust-embed = "5.6.0"
 dht22_pi = "0.3.0"
 rppal = "0.11.3"
 
+# For beerxml
+serde-xml-rs = "0.4.0"
+
 bm-db = { path = "../lib/bm-db" }
 bm-bluetooth = { path = "../lib/bm-bluetooth" }
 bm-tilt = { path = "../lib/bm-tilt" }
 bm-grainfather = { path = "../lib/bm-grainfather" }
+bm-recipe = { path = "../lib/bm-recipe" }
+bm-beerxml = { path = "../lib/bm-beerxml" }
 
 [dependencies.bluez]
 git = "https://github.com/laptou/bluez-rs"
