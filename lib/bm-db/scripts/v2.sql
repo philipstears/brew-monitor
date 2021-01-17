@@ -3,12 +3,24 @@
 -- -----------------------------------------------------------------------------
 create table recipes (
     id integer primary key,
-    alias text not null,
-    recipe text not null
+    name text not null,
+    created_on integer not null,
+    latest_version integer
     );
 
-create unique index idx_recipes_alias
-on recipes (alias);
+create unique index idx_recipes_name
+on recipes (name);
+
+create table recipe_versions (
+    recipe_id integer not null,
+    version_id integer not null,
+    data text not null,
+    created_on integer not null,
+    foreign key(recipe_id) references recipes(id)
+    );
+
+create unique index idx_recipe_versions_ids
+on recipe_versions (recipe_id, version_id);
 
 -- -----------------------------------------------------------------------------
 -- DHT22 Schema Change
