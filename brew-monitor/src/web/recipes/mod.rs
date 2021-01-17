@@ -143,9 +143,66 @@ mod handlers {
     }
 
     pub(super) async fn recipes_import(data: bytes::Bytes, _db: DB) -> Result<Response, Rejection> {
-        let parsed: bm_beerxml::Recipes = serde_xml_rs::from_reader(data.as_ref()).unwrap();
+        let recipes_in: bm_beerxml::Recipes = serde_xml_rs::from_reader(data.as_ref()).unwrap();
 
-        println!("Got {:?}", parsed);
+        for recipe_in in recipes_in.recipes {
+            let recipe_out = bm_recipe::Recipe {
+                batch_size: (recipe_in.batch_size * 1_000.0).trunc() as u32,
+                boil_size: (recipe_in.boil_size * 1_000.0).trunc() as u32,
+                mash_steps: {
+                    let mut mash_steps = Vec::with_capacity(recipe_in.mash.steps.steps.len());
+
+                    for mash_step_in in recipe_in.mash.steps.steps.iter() {
+                        let mash_step_out = bm_recipe::MashStep {
+                            name: mash_step_in.name.clone(),
+                            time: mash_step_in.time.into(),
+                            temp: mash_step_in.temp.into(),
+                        };
+
+                        mash_steps.push(mash_step_out);
+                    }
+
+                    mash_steps
+                },
+                boil_additions: {
+                    let mut boil_additions = Vec::with_capacity(recipe_in.hops.hops.len());
+
+                    for hop_in in recipe_in.hops.hops.iter().filter(|hop| hop.r#use == bm_beerxml::HopUse::Boil) {
+                        let mash_step_out = bm_recipe::BoilAddition {
+                            name: hop_in.name.clone(),
+                            mass: (hop_in.amount * 1_000.0).trunc() as u32,
+                            time: hop_in.time.into(),
+                            kind: bm_recipe::BoilAdditionType::Hop,
+                        };
+
+                        boil_additions.push(mash_step_out);
+                    }
+
+                    for misc_in in recipe_in.miscs.miscs.iter().filter(|misc| misc.r#use == bm_beerxml::MiscUse::Boil) {
+                        let mash_step_out = bm_recipe::BoilAddition {
+                            name: misc_in.name.clone(),
+                            mass: (misc_in.amount * 1_000.0).trunc() as u32,
+                            time: misc_in.time.into(),
+                            kind: if misc_in.name.to_lowercase() == "yeast nutrient" {
+                                bm_recipe::BoilAdditionType::YeastNutrient
+                            } else {
+                                bm_recipe::BoilAdditionType::Other {
+                                    description: misc_in.name.clone(),
+                                }
+                            },
+                        };
+
+                        boil_additions.push(mash_step_out);
+                    }
+
+                    boil_additions.sort_by(|a, b| b.time.cmp(&a.time));
+
+                    boil_additions
+                },
+            };
+
+            println!("Got {:#?}", recipe_out);
+        }
 
         let reply = warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::CREATED).into_response();
         Ok(reply)

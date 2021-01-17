@@ -42,6 +42,9 @@ pub struct Recipe {
     #[serde(rename = "HOPS")]
     pub hops: Hops,
 
+    #[serde(rename = "MISCS")]
+    pub miscs: Miscs,
+
     #[serde(rename = "MASH")]
     pub mash: Mash,
 
@@ -63,6 +66,24 @@ pub struct Hops {
     pub hops: Vec<Hop>,
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub enum HopUse {
+    #[serde(rename = "Boil")]
+    Boil,
+
+    #[serde(rename = "Dry Hop")]
+    DryHop,
+
+    #[serde(rename = "Mash")]
+    Mash,
+
+    #[serde(rename = "Aroma")]
+    Aroma,
+
+    #[serde(rename = "First Wort")]
+    FirstWort,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Hop {
     #[serde(rename = "NAME")]
@@ -79,21 +100,33 @@ pub struct Hop {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum HopUse {
+pub struct Miscs {
+    #[serde(rename = "MISC")]
+    pub miscs: Vec<Misc>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Misc {
+    #[serde(rename = "NAME")]
+    pub name: String,
+
+    #[serde(rename = "USE")]
+    pub r#use: MiscUse,
+
+    #[serde(rename = "TIME")]
+    pub time: u16,
+
+    #[serde(rename = "AMOUNT")]
+    pub amount: f64,
+
+    #[serde(rename = "AMOUNT_IS_WEIGHT")]
+    pub amount_is_weight: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub enum MiscUse {
     #[serde(rename = "Boil")]
     Boil,
-
-    #[serde(rename = "Dry Hop")]
-    DryHop,
-
-    #[serde(rename = "Mash")]
-    Mash,
-
-    #[serde(rename = "Aroma")]
-    Aroma,
-
-    #[serde(rename = "First Wort")]
-    FirstWort,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -6,7 +6,7 @@ type Gramme = u32;
 type Minute = u32;
 type Celsius = u32;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Recipe {
     #[serde(rename = "batchSize")]
     pub batch_size: Millilitre,
@@ -18,14 +18,14 @@ pub struct Recipe {
     pub boil_additions: Vec<BoilAddition>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct MashStep {
     pub name: String,
     pub time: Minute,
     pub temp: Celsius,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct BoilAddition {
     /// The type of the addition.
     pub kind: BoilAdditionType,
@@ -40,7 +40,7 @@ pub struct BoilAddition {
     pub time: Minute,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum BoilAdditionType {
     Hop,
     YeastNutrient,
