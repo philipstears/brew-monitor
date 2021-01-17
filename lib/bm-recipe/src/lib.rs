@@ -33,11 +33,17 @@ pub struct BoilAddition {
     /// The name of the addition to add, e.g. "Mosaic".
     pub name: String,
 
-    /// The mass of the boil addition.
-    pub mass: Gramme,
+    /// The amount of the boil addition.
+    pub amount: Amount,
 
     /// Time from the end of the boil.
     pub time: Minute,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Amount {
+    Mass(Gramme),
+    Volume(Millilitre),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

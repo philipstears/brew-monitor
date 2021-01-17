@@ -42,7 +42,7 @@ pub struct Recipe {
     #[serde(rename = "HOPS")]
     pub hops: Hops,
 
-    #[serde(rename = "MISCS")]
+    #[serde(rename = "MISCS", default)]
     pub miscs: Miscs,
 
     #[serde(rename = "MASH")]
@@ -99,7 +99,7 @@ pub struct Hop {
     pub amount: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Miscs {
     #[serde(rename = "MISC")]
     pub miscs: Vec<Misc>,

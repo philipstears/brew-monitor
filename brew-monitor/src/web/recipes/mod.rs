@@ -170,7 +170,7 @@ mod handlers {
                     for hop_in in recipe_in.hops.hops.iter().filter(|hop| hop.r#use == bm_beerxml::HopUse::Boil) {
                         let mash_step_out = bm_recipe::BoilAddition {
                             name: hop_in.name.clone(),
-                            mass: (hop_in.amount * 1_000.0).trunc() as u32,
+                            amount: bm_recipe::Amount::Mass((hop_in.amount * 1_000.0).trunc() as u32),
                             time: hop_in.time.into(),
                             kind: bm_recipe::BoilAdditionType::Hop,
                         };
@@ -181,7 +181,11 @@ mod handlers {
                     for misc_in in recipe_in.miscs.miscs.iter().filter(|misc| misc.r#use == bm_beerxml::MiscUse::Boil) {
                         let mash_step_out = bm_recipe::BoilAddition {
                             name: misc_in.name.clone(),
-                            mass: (misc_in.amount * 1_000.0).trunc() as u32,
+                            amount: if misc_in.amount_is_weight {
+                                bm_recipe::Amount::Mass((misc_in.amount * 1_000.0).trunc() as u32)
+                            } else {
+                                bm_recipe::Amount::Volume((misc_in.amount * 1_000.0).trunc() as u32)
+                            },
                             time: misc_in.time.into(),
                             kind: if misc_in.name.to_lowercase() == "yeast nutrient" {
                                 bm_recipe::BoilAdditionType::YeastNutrient
