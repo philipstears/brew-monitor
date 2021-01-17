@@ -7,6 +7,9 @@ pub use tilt::*;
 mod dht22;
 pub use dht22::*;
 
+mod recipe;
+pub use recipe::*;
+
 const V1: &'static str = include_str!("../scripts/v1.sql");
 const V2: &'static str = include_str!("../scripts/v2.sql");
 
@@ -33,6 +36,7 @@ pub struct DB {
     connection: WrappedConnection,
     dht22: DHT22Data,
     tilt: TiltData,
+    recipe: RecipeData,
 }
 
 impl DB {
@@ -46,6 +50,7 @@ impl DB {
         let result = Self {
             dht22: DHT22Data::new(wrapped.clone()),
             tilt: TiltData::new(wrapped.clone()),
+            recipe: RecipeData::new(wrapped.clone()),
             connection: wrapped,
         };
 
@@ -58,6 +63,10 @@ impl DB {
 
     pub fn tilt(&self) -> &TiltData {
         &self.tilt
+    }
+
+    pub fn recipe(&self) -> &RecipeData {
+        &self.recipe
     }
 
     /// Recursively updates the database version to the latest.

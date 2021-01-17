@@ -6,7 +6,7 @@ type Gramme = u32;
 type Minute = u32;
 type Celsius = u32;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Recipe {
     #[serde(rename = "batchSize")]
     pub batch_size: Millilitre,
@@ -19,14 +19,14 @@ pub struct Recipe {
     pub fermentables: Vec<Fermentable>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct MashStep {
     pub name: String,
     pub time: Minute,
     pub temp: Celsius,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct BoilAddition {
     /// The type of the addition.
     pub kind: BoilAdditionType,
@@ -41,13 +41,13 @@ pub struct BoilAddition {
     pub time: Minute,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum Amount {
     Mass(Gramme),
     Volume(Millilitre),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum BoilAdditionType {
     Hop,
     YeastNutrient,
@@ -56,16 +56,8 @@ pub enum BoilAdditionType {
     },
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Fermentable {
     pub name: String,
     pub mass: Gramme,
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
 }

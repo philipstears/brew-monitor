@@ -142,7 +142,7 @@ mod handlers {
         Ok(reply)
     }
 
-    pub(super) async fn recipes_import(data: bytes::Bytes, _db: DB) -> Result<Response, Rejection> {
+    pub(super) async fn recipes_import(data: bytes::Bytes, db: DB) -> Result<Response, Rejection> {
         let recipes_in: bm_beerxml::Recipes = serde_xml_rs::from_reader(data.as_ref()).unwrap();
 
         for recipe_in in recipes_in.recipes {
@@ -226,6 +226,10 @@ mod handlers {
             println!("Mash: {}l, Sparge: {}l", mash_water, sparge_water);
 
             println!("Got {:#?}", recipe_out);
+
+            db.recipe().ensure(recipe_in.name.as_ref()).unwrap();
+
+            db.recipe().insert_version(recipe_in.name.as_ref(), &recipe_out).unwrap();
         }
 
         let reply = warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::CREATED).into_response();

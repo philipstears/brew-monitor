@@ -16,7 +16,7 @@ let
   #  code changed, pinning to this version for now, because the
   # version of rustracer in nixpkgs doesn't have the patch to support
   # the new layout
-  rustChannel = nixPackages.rustChannelOf { channel = "1.46.0"; };
+  rustChannel = nixPackages.rustChannelOf { date = "2020-08-27"; channel = "nightly"; };
 
   rust =
     (rustChannel.rust.override {

@@ -303,10 +303,12 @@ dependencies = [
 name = "bm-db"
 version = "0.1.0"
 dependencies = [
+ "bm-recipe",
  "bm-tilt",
  "chrono",
  "rusqlite",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
