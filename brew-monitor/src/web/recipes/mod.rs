@@ -203,7 +203,27 @@ mod handlers {
 
                     boil_additions
                 },
+                fermentables: {
+                    let mut result = Vec::with_capacity(recipe_in.fermentables.fermentables.len());
+
+                    for fermentable_in in recipe_in.fermentables.fermentables.iter() {
+                        let fermentable_out = bm_recipe::Fermentable {
+                            name: fermentable_in.name.clone(),
+                            mass: (fermentable_in.amount * 1000.0).trunc() as u32,
+                        };
+
+                        result.push(fermentable_out);
+                    }
+
+                    result
+                },
             };
+
+            let grain_bill = recipe_in.fermentables.fermentables.iter().map(|f| f.amount).sum();
+            let mash_water = bm_grainfather::calc::mash_water_metric(grain_bill);
+            let sparge_water = bm_grainfather::calc::sparge_water_metric(recipe_in.batch_size, grain_bill);
+
+            println!("Mash: {}l, Sparge: {}l", mash_water, sparge_water);
 
             println!("Got {:#?}", recipe_out);
         }

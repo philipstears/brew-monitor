@@ -5,8 +5,13 @@
 // docs recommend to start heating once doughed in
 
 pub fn mash_water_metric(grain_bill_kg: f64) -> f64 {
-    // Litres
-    3.5 + 2.7 * grain_bill_kg
+    const LAUTER_DEADSPACE_LITRES: f64 = 3.5;
+
+    // https://byo.com/article/calculating-water-usage-advanced-brewing/ says
+    // this should be between 2.1 and 3.1 kg/l (1 - 1.5 qt per lb)
+    const MASH_THICKNESS_IN_LITRES_PER_KG: f64 = 2.7;
+
+    LAUTER_DEADSPACE_LITRES + MASH_THICKNESS_IN_LITRES_PER_KG * grain_bill_kg
 }
 
 pub fn mash_water_imperial(grain_bill_lb: f64) -> f64 {

@@ -48,6 +48,9 @@ pub struct Recipe {
     #[serde(rename = "MASH")]
     pub mash: Mash,
 
+    #[serde(rename = "FERMENTABLES")]
+    pub fermentables: Fermentables,
+
     #[serde(rename = "EST_OG", default)]
     pub estimated_original_gravity: Option<String>,
 
@@ -66,6 +69,21 @@ pub struct Hops {
     pub hops: Vec<Hop>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Hop {
+    #[serde(rename = "NAME")]
+    pub name: String,
+
+    #[serde(rename = "USE")]
+    pub r#use: HopUse,
+
+    #[serde(rename = "TIME")]
+    pub time: u16,
+
+    #[serde(rename = "AMOUNT")]
+    pub amount: f64,
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum HopUse {
     #[serde(rename = "Boil")]
@@ -82,21 +100,6 @@ pub enum HopUse {
 
     #[serde(rename = "First Wort")]
     FirstWort,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Hop {
-    #[serde(rename = "NAME")]
-    pub name: String,
-
-    #[serde(rename = "USE")]
-    pub r#use: HopUse,
-
-    #[serde(rename = "TIME")]
-    pub time: u16,
-
-    #[serde(rename = "AMOUNT")]
-    pub amount: f64,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -151,6 +154,21 @@ pub struct MashStep {
 
     #[serde(rename = "STEP_TEMP")]
     pub temp: u16,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct Fermentables {
+    #[serde(rename = "FERMENTABLE")]
+    pub fermentables: Vec<Fermentable>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Fermentable {
+    #[serde(rename = "NAME")]
+    pub name: String,
+
+    #[serde(rename = "AMOUNT")]
+    pub amount: f64,
 }
 
 #[cfg(test)]

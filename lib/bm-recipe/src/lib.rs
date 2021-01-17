@@ -16,6 +16,7 @@ pub struct Recipe {
     pub mash_steps: Vec<MashStep>,
     #[serde(rename = "boilAdditions")]
     pub boil_additions: Vec<BoilAddition>,
+    pub fermentables: Vec<Fermentable>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,6 +54,12 @@ pub enum BoilAdditionType {
     Other {
         description: String,
     },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Fermentable {
+    pub name: String,
+    pub mass: Gramme,
 }
 
 #[cfg(test)]
