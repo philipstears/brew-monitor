@@ -127,8 +127,20 @@ mod resources {
 mod handlers {
     use super::*;
 
-    pub(super) async fn recipe_get(_alias: String, _db: DB) -> Result<Response, Rejection> {
-        let reply = warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::OK).into_response();
+    pub(super) async fn recipe_get(name: String, db: DB) -> Result<Response, Rejection> {
+        let reply = match db.recipe().get_recipe(&name) {
+            Ok(Some(recipe)) => warp::reply::json(&recipe).into_response(),
+            Ok(None) => {
+                eprintln!("Couldn't find recipe {}", name);
+                warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::NOT_FOUND).into_response()
+            }
+            Err(err) => {
+                eprintln!("Couldn't get recipe {}: {:?}", name, err);
+                warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::INTERNAL_SERVER_ERROR)
+                    .into_response()
+            }
+        };
+
         Ok(reply)
     }
 
@@ -137,8 +149,16 @@ mod handlers {
         Ok(reply)
     }
 
-    pub(super) async fn recipes_get(_db: DB) -> Result<Response, Rejection> {
-        let reply = warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::OK).into_response();
+    pub(super) async fn recipes_get(db: DB) -> Result<Response, Rejection> {
+        let reply = match db.recipe().get_recipes() {
+            Ok(recipes) => warp::reply::json(&recipes).into_response(),
+            Err(err) => {
+                eprintln!("Couldn't get recipes: {:?}", err);
+                warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::INTERNAL_SERVER_ERROR)
+                    .into_response()
+            }
+        };
+
         Ok(reply)
     }
 

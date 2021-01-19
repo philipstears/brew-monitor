@@ -1,6 +1,6 @@
 use bm_recipe;
 use chrono::{DateTime, TimeZone, Utc};
-use rusqlite::{params, Connection, OptionalExtension, Result};
+use rusqlite::{params, Connection, OptionalExtension, Result, Row, NO_PARAMS};
 use serde::{Deserialize, Serialize};
 
 use super::WrappedConnection;
@@ -8,10 +8,12 @@ use super::WrappedConnection;
 pub type RecipeId = i64;
 pub type Version = u32;
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RecipeInfo {
-    id: RecipeId,
-    created_on: DateTime<Utc>,
-    latest_version: Option<Version>,
+    pub id: RecipeId,
+    pub name: String,
+    pub created_on: DateTime<Utc>,
+    pub latest_version: Option<Version>,
 }
 
 #[derive(Clone)]
@@ -35,6 +37,27 @@ impl RecipeData {
         )?;
 
         Ok(())
+    }
+
+    pub fn get_recipes(&self) -> Result<Vec<RecipeInfo>> {
+        let connection = self.0.lock_or_panic();
+        recipes(&connection)
+    }
+
+    pub fn get_recipe(&self, name: &str) -> Result<Option<bm_recipe::Recipe>> {
+        let connection = self.0.lock_or_panic();
+
+        let mut statement = connection.prepare(
+            "
+            select data from recipe_versions
+            inner join recipes
+            on recipe_versions.recipe_id = recipes.id
+            and recipe_versions.version_id = recipes.latest_version
+            where recipes.name = ?
+            ",
+        )?;
+
+        statement.query_row(params![name], map_recipe_version_data).optional()
     }
 
     pub fn insert_version(&self, name: &str, recipe: &bm_recipe::Recipe) -> Result<Version> {
@@ -82,20 +105,35 @@ fn recipe_version(connection: &Connection, recipe_id: RecipeId, version: Version
     let mut statement =
         connection.prepare("select data from recipe_versions where recipe_id = ? AND version_id = ?")?;
 
-    statement.query_row(params![recipe_id, version], |row| {
-        let data: String = row.get(0)?;
-        Ok(serde_json::from_str::<bm_recipe::Recipe>(&data).unwrap())
-    })
+    statement.query_row(params![recipe_id, version], map_recipe_version_data)
 }
 
 fn recipe_details(connection: &Connection, name: &str) -> Result<RecipeInfo> {
-    let mut statement = connection.prepare("select id,created_on,latest_version from recipes where name = ?")?;
+    let mut statement = connection.prepare("select id,name,created_on,latest_version from recipes where name = ?")?;
+    statement.query_row(params![name], map_recipe_row)
+}
 
-    statement.query_row(params![name], |row| {
-        Ok(RecipeInfo {
-            id: row.get(0)?,
-            created_on: Utc.timestamp(row.get(1)?, 0),
-            latest_version: row.get(2)?,
-        })
+fn recipes(connection: &Connection) -> Result<Vec<RecipeInfo>> {
+    let mut statement = connection.prepare("select id,name,created_on,latest_version from recipes")?;
+    let mut results = Vec::new();
+
+    for result in statement.query_map(NO_PARAMS, map_recipe_row)? {
+        results.push(result?)
+    }
+
+    Ok(results)
+}
+
+fn map_recipe_row(row: &Row) -> Result<RecipeInfo> {
+    Ok(RecipeInfo {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        created_on: Utc.timestamp(row.get(2)?, 0),
+        latest_version: row.get(3)?,
     })
+}
+
+fn map_recipe_version_data(row: &Row) -> Result<bm_recipe::Recipe> {
+    let data: String = row.get(0)?;
+    Ok(serde_json::from_str::<bm_recipe::Recipe>(&data).unwrap())
 }
