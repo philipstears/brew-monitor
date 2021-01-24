@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as Modal from "react-modal";
 import * as Proto from "./types";
 
 import { Client }  from "./client";
