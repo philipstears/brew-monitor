@@ -29,7 +29,7 @@ pub async fn main() {
 
     let routes = {
         let web_content = web::assets::route();
-        let gf_route = web::gf::route(gf.clone());
+        let gf_route = web::gf::route(db.clone(), gf.clone());
         let tilt_route = web::tilt::route(db.clone(), tilts.clone());
         let dht22_route = web::dht22::route(db.clone());
         let recipes_route = web::recipes::route(db.clone());

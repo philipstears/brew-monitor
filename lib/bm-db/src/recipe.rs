@@ -16,6 +16,16 @@ pub struct RecipeInfo {
     pub latest_version: Option<Version>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RecipeVersionInfo {
+    pub id: RecipeId,
+    pub name: String,
+    pub created_on: DateTime<Utc>,
+    pub version: Version,
+    pub version_data: bm_recipe::Recipe,
+    pub version_created_on: DateTime<Utc>,
+}
+
 #[derive(Clone)]
 pub struct RecipeData(WrappedConnection);
 
@@ -44,20 +54,36 @@ impl RecipeData {
         recipes(&connection)
     }
 
-    pub fn get_recipe(&self, name: &str) -> Result<Option<bm_recipe::Recipe>> {
+    pub fn get_recipe_latest(&self, name: &str) -> Result<Option<RecipeVersionInfo>> {
         let connection = self.0.lock_or_panic();
 
         let mut statement = connection.prepare(
             "
-            select data from recipe_versions
-            inner join recipes
-            on recipe_versions.recipe_id = recipes.id
-            and recipe_versions.version_id = recipes.latest_version
-            where recipes.name = ?
+            select
+              r.id,r.name,r.created_on,
+              v.version_id,v.data,v.created_on
+            from recipe_versions v
+            inner join recipes r
+            on v.recipe_id = r.id
+            and v.version_id = r.latest_version
+            where r.name = ?
             ",
         )?;
 
-        statement.query_row(params![name], map_recipe_version_data).optional()
+        statement
+            .query_row(params![name], |row| {
+                let version_data: String = row.get(4)?;
+
+                Ok(RecipeVersionInfo {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    created_on: Utc.timestamp(row.get(2)?, 0),
+                    version: row.get(3)?,
+                    version_data: serde_json::from_str::<bm_recipe::Recipe>(&version_data).unwrap(),
+                    version_created_on: Utc.timestamp(row.get(5)?, 0),
+                })
+            })
+            .optional()
     }
 
     pub fn insert_version(&self, name: &str, recipe: &bm_recipe::Recipe) -> Result<Version> {

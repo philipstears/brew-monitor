@@ -1,5 +1,7 @@
+use bm_db as db;
 use bm_grainfather::{
-    btleplug::Client as GrainfatherClient, notifications::*, Command, InteractionCode, Notification, Recipe, StepNumber,
+    self as gf, btleplug::Client as GrainfatherClient, notifications::*, Command, InteractionCode, Notification,
+    RecipeDelay, StepNumber,
 };
 use std::sync::{
     mpsc::{self, Receiver, Sender},
@@ -45,7 +47,7 @@ impl GrainfatherManager {
         self.lock().command(command)
     }
 
-    pub fn send_recipe(&self, recipe: &Recipe) -> Result<(), btleplug::Error> {
+    pub fn send_recipe(&self, recipe: &db::RecipeVersionInfo) -> Result<(), btleplug::Error> {
         self.lock().send_recipe(recipe)
     }
 
@@ -116,9 +118,53 @@ impl GrainfatherInternal {
         result
     }
 
-    pub fn send_recipe(&mut self, recipe: &Recipe) -> Result<(), btleplug::Error> {
+    pub fn send_recipe(&mut self, db_recipe_version_info: &db::RecipeVersionInfo) -> Result<(), btleplug::Error> {
         let client = self.client.as_ref().ok_or(btleplug::Error::NotConnected)?;
-        client.send_recipe(recipe)
+
+        let db_recipe = &db_recipe_version_info.version_data;
+
+        let grain_bill = db_recipe.fermentables.iter().map(|f| f.mass).sum::<u32>();
+        let grain_bill = f64::from(grain_bill) / 1_000.0;
+
+        let batch_size = f64::from(db_recipe.batch_size) / 1_000.0;
+
+        let mash_volume = gf::calc::mash_water_metric(grain_bill);
+        let sparge_volume = gf::calc::sparge_water_metric(batch_size, grain_bill) * 1.04;
+
+        let gf_recipe = gf::Recipe {
+            strike_temp_mode: false,
+
+            boil_temperature: 99.5,
+            boil_time: db_recipe.boil_time as u8,
+            boil_power_mode: false,
+
+            show_water_treatment_alert: false,
+            show_sparge_counter: true,
+            show_sparge_alert: true,
+            skip_start: false,
+            hop_stand_time: 0,
+
+            delay: RecipeDelay::None,
+
+            // TODO: to what extent does the GF support other character sets?  / unicode
+            name: db_recipe_version_info.name.chars().take(16).map(|c| c.to_ascii_uppercase()).collect(),
+
+            mash_volume,
+            sparge_volume,
+
+            boil_steps: db_recipe.boil_additions.iter().map(|boil_addition| boil_addition.time as u8).collect(),
+
+            mash_steps: db_recipe
+                .mash_steps
+                .iter()
+                .map(|mash_step| gf::MashStep {
+                    minutes: mash_step.time as u8,
+                    temperature: mash_step.temp as u8,
+                })
+                .collect(),
+        };
+
+        client.send_recipe(&gf_recipe)
     }
 
     pub fn subscribe(&mut self) -> Receiver<ManagerOrClientNotification> {

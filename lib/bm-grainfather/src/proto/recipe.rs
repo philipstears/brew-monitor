@@ -67,7 +67,7 @@ pub struct Recipe {
 
     // NOTE: according to kingpulsar, this may not be implemented
     #[serde(default)]
-    strike_temp_mode: bool,
+    pub strike_temp_mode: bool,
 
     /// The times (from the end of the boil) at which additions should be added to the boil
     pub boil_steps: Vec<u8>,

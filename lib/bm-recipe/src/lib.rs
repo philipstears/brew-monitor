@@ -10,12 +10,19 @@ type Celsius = u32;
 pub struct Recipe {
     #[serde(rename = "batchSize")]
     pub batch_size: Millilitre,
+
     #[serde(rename = "boilSize")]
     pub boil_size: Millilitre,
+
+    #[serde(rename = "boiltime")]
+    pub boil_time: Minute,
+
     #[serde(rename = "mashSteps")]
     pub mash_steps: Vec<MashStep>,
+
     #[serde(rename = "boilAdditions")]
     pub boil_additions: Vec<BoilAddition>,
+
     pub fermentables: Vec<Fermentable>,
 }
 
@@ -42,12 +49,14 @@ pub struct BoilAddition {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum Amount {
     Mass(Gramme),
     Volume(Millilitre),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum BoilAdditionType {
     Hop,
     YeastNutrient,

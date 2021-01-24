@@ -22,6 +22,9 @@ pub struct Recipe {
     #[serde(rename = "BOIL_SIZE")]
     pub boil_size: f64,
 
+    #[serde(rename = "BOIL_TIME")]
+    pub boil_time: u32,
+
     #[serde(rename = "TYPE")]
     pub r#type: String,
 

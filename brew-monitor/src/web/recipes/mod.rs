@@ -128,8 +128,8 @@ mod handlers {
     use super::*;
 
     pub(super) async fn recipe_get(name: String, db: DB) -> Result<Response, Rejection> {
-        let reply = match db.recipe().get_recipe(&name) {
-            Ok(Some(recipe)) => warp::reply::json(&recipe).into_response(),
+        let reply = match db.recipe().get_recipe_latest(&name) {
+            Ok(Some(info)) => warp::reply::json(&info.version_data).into_response(),
             Ok(None) => {
                 eprintln!("Couldn't find recipe {}", name);
                 warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::NOT_FOUND).into_response()
@@ -169,6 +169,7 @@ mod handlers {
             let recipe_out = bm_recipe::Recipe {
                 batch_size: (recipe_in.batch_size * 1_000.0).trunc() as u32,
                 boil_size: (recipe_in.boil_size * 1_000.0).trunc() as u32,
+                boil_time: recipe_in.boil_time,
                 mash_steps: {
                     let mut mash_steps = Vec::with_capacity(recipe_in.mash.steps.steps.len());
 
