@@ -36,46 +36,56 @@ pub struct BluetoothDiscovery<'z> {
 
 impl<'z> BluetoothDiscovery<'z> {
     pub async fn run(sender: Sender<BluetoothDiscoveryEvent>) -> Result<(), bluez::Error> {
-        let mut bluez_client = BlueZClient::new().unwrap();
+        loop {
+            let mut bluez_client = BlueZClient::new().unwrap();
 
-        let bluez_controllers = bluez_client.get_controller_list().await.unwrap();
+            let bluez_controllers = bluez_client.get_controller_list().await.unwrap();
 
-        let (bluez_controller, bluez_info) = bluez_controllers
-            .into_iter()
-            .filter_map(|controller| {
-                let info = block_on(bluez_client.get_controller_info(controller)).ok()?;
+            let maybe_bluez_controller = bluez_controllers
+                .into_iter()
+                .filter_map(|controller| {
+                    let info = block_on(bluez_client.get_controller_info(controller)).ok()?;
 
-                if info.supported_settings.contains(ControllerSetting::Powered) {
-                    Some((controller, info))
-                } else {
-                    None
+                    if info.supported_settings.contains(ControllerSetting::Powered) {
+                        Some((controller, info))
+                    } else {
+                        None
+                    }
+                })
+                .nth(0);
+
+            let (bluez_controller, bluez_info) = match maybe_bluez_controller {
+                Some(v) => v,
+                None => {
+                    eprintln!("No usable controllers found, waiting for 5 seconds");
+                    tokio::time::delay_for(std::time::Duration::from_secs(5)).await;
+                    continue;
                 }
-            })
-            .nth(0)
-            .expect("no usable controllers found");
+            };
 
-        if !bluez_info.current_settings.contains(ControllerSetting::Powered) {
-            eprintln!("powering on bluetooth controller {}", bluez_controller);
-            bluez_client.set_powered(bluez_controller, true).await?;
+            if !bluez_info.current_settings.contains(ControllerSetting::Powered) {
+                eprintln!("powering on bluetooth controller {}", bluez_controller);
+                bluez_client.set_powered(bluez_controller, true).await?;
+            }
+
+            let btle_manager = Manager::new().unwrap();
+            let btle_adapters = btle_manager.adapters().unwrap();
+            let btle_adapter = btle_adapters
+                .into_iter()
+                .filter(|adapter| adapter.addr.address == bluez_info.address.as_ref())
+                .nth(0)
+                .unwrap();
+            let btle_central = btle_adapter.connect().unwrap();
+
+            let state = Self {
+                sender,
+                bluez_client,
+                bluez_controller,
+                btle_central,
+            };
+
+            return state.run_prime().await;
         }
-
-        let btle_manager = Manager::new().unwrap();
-        let btle_adapters = btle_manager.adapters().unwrap();
-        let btle_adapter = btle_adapters
-            .into_iter()
-            .filter(|adapter| adapter.addr.address == bluez_info.address.as_ref())
-            .nth(0)
-            .unwrap();
-        let btle_central = btle_adapter.connect().unwrap();
-
-        let state = Self {
-            sender,
-            bluez_client,
-            bluez_controller,
-            btle_central,
-        };
-
-        state.run_prime().await
     }
 
     async fn run_prime(mut self) -> Result<(), bluez::Error> {

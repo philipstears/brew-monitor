@@ -65,8 +65,22 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             },
         };
 
+        this.openWebSocket();
+    }
+
+    openWebSocket = () => {
         let ws = new WebSocket(this.state.ws_url);
+
         ws.onmessage = event => this.handleWebSocketMessage(event);
+
+        ws.onerror = event => {
+            console.error("The websocket encountered an error", event);
+        };
+
+        ws.onclose = event => {
+            console.error("The websocket closed, re-opening", event);
+            this.openWebSocket();
+        }
     }
 
     render = () => (

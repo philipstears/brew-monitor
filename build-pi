@@ -4,6 +4,8 @@ set -x
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
+(cd brew-monitor/www_src && npm i && npm run build)
+
 docker run \
     --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \

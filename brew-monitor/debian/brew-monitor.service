@@ -1,6 +1,7 @@
 [Unit]
 Description=brew-monitor
 After=network.target
+After=bluetooth.target
 
 [Service]
 ExecStart=/usr/local/bin/brew-monitor
