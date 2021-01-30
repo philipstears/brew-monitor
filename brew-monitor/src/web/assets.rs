@@ -5,5 +5,5 @@ use warp::{filters::BoxedFilter, reply::Reply, Filter};
 struct WebContent;
 
 pub fn route() -> BoxedFilter<(impl Reply,)> {
-    warp_embed::embed(&WebContent).boxed()
+    warp_embed::embed(&WebContent).with(warp::compression::gzip()).boxed()
 }
