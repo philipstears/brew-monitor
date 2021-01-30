@@ -8,7 +8,7 @@ use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
 };
-use warp::{reject::Rejection, reply::Reply, Filter};
+use warp::{filters::BoxedFilter, reply::Reply, Filter};
 
 #[derive(Deserialize, Serialize)]
 struct ReadingsQuery {
@@ -16,10 +16,7 @@ struct ReadingsQuery {
     to: DateTime<Utc>,
 }
 
-pub fn route(
-    db: DB,
-    tilts: Arc<RwLock<HashMap<TiltColor, DeviceInfo<Tilt>>>>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+pub fn route(db: DB, tilts: Arc<RwLock<HashMap<TiltColor, DeviceInfo<Tilt>>>>) -> BoxedFilter<(impl Reply,)> {
     let readings = warp::path!("tilt" / TiltColorParam).and(warp::query::<ReadingsQuery>()).map(
         move |color: TiltColorParam, query: ReadingsQuery| {
             let readings = db.tilt().get_readings(color.color(), query.from, query.to).unwrap();
@@ -41,7 +38,7 @@ pub fn route(
         }
     });
 
-    readings.or(single)
+    readings.or(single).boxed()
 }
 
 struct TiltColorParam(TiltColor);

@@ -2,6 +2,7 @@ use bm_db::{DHT22Info, DB};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use warp::{
+    filters::BoxedFilter,
     reject::Rejection,
     reply::{Reply, Response},
     Filter,
@@ -13,8 +14,10 @@ struct ReadingsQuery {
     to: DateTime<Utc>,
 }
 
-pub fn route(db: DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path::path("dht22").and(routes::put(db.clone()).or(routes::get(db.clone())).or(routes::readings(db.clone())))
+pub fn route(db: DB) -> BoxedFilter<(impl Reply,)> {
+    warp::path::path("dht22")
+        .and(routes::put(db.clone()).or(routes::get(db.clone())).or(routes::readings(db.clone())))
+        .boxed()
 }
 
 fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {

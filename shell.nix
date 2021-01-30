@@ -42,6 +42,7 @@ in
         inherit readline ncurses;
         interactive = true;
       })
+      lld
     ];
 
     RUST_SRC_PATH = "${rustChannel.rust-src}/lib/rustlib/src/rust/src";

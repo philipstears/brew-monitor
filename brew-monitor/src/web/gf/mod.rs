@@ -8,6 +8,7 @@ use bm_db::DB;
 use bm_grainfather::{self as gf};
 use serde::{Deserialize, Serialize};
 use warp::{
+    filters::BoxedFilter,
     reject::Rejection,
     reply::{Reply, Response},
     ws::Ws,
@@ -19,7 +20,7 @@ struct ActivateRecipeBody {
     name: String,
 }
 
-pub fn route(db: DB, gf: GrainfatherManager) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+pub fn route(db: DB, gf: GrainfatherManager) -> BoxedFilter<(impl Reply,)> {
     let ws = {
         let gf = gf.clone();
 
@@ -56,7 +57,7 @@ pub fn route(db: DB, gf: GrainfatherManager) -> impl Filter<Extract = impl Reply
             .and_then(handlers::recipe_activate)
     };
 
-    warp::path("gf").and(command.or(recipe).or(ws))
+    warp::path("gf").and(command.or(recipe).or(ws)).boxed()
 }
 
 mod handlers {
