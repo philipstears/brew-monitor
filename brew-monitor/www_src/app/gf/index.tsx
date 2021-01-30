@@ -48,7 +48,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                 "show_sparge_alert": true,
                 "delay": { "type": "MinutesSeconds", "data": [5, 0] },
                 "skip_start": false,
-                "name": "STIPA",
+                "name": "DPC",
                 "hop_stand_time": 0,
                 "boil_power_mode": false,
                 "strike_temp_mode": false,
