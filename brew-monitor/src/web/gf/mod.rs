@@ -81,7 +81,12 @@ mod handlers {
                 }
             },
 
-            Ok(None) => warp::reply::with_status(warp::reply(), warp::http::StatusCode::NOT_FOUND).into_response(),
+            Ok(None) => warp::reply::with_header(
+                warp::reply::with_status(warp::reply(), warp::http::StatusCode::NOT_FOUND),
+                "X-Missing-Resource",
+                "recipe",
+            )
+            .into_response(),
 
             Err(error) => {
                 eprintln!("Unhandled data access error {:?}", error);
