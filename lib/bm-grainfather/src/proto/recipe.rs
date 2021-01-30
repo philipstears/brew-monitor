@@ -20,9 +20,6 @@ pub struct MashStep {
 /// automatic mode.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Recipe {
-    /// The temperature for the boil
-    pub boil_temperature: f64,
-
     /// The total duration of the boil
     pub boil_time: u8,
 
@@ -207,7 +204,6 @@ impl Recipe {
 impl Default for Recipe {
     fn default() -> Self {
         Self {
-            boil_temperature: 99.5,
             boil_time: 60,
             mash_volume: 13.25,
             sparge_volume: 14.64,

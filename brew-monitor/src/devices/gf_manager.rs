@@ -134,7 +134,6 @@ impl GrainfatherInternal {
         let gf_recipe = gf::Recipe {
             strike_temp_mode: false,
 
-            boil_temperature: 99.5,
             boil_time: db_recipe.boil_time as u8,
             boil_power_mode: false,
 
