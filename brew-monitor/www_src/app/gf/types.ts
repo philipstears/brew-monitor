@@ -146,7 +146,6 @@ export interface RecipeMashStep {
 }
 
 export interface Recipe {
-    boil_temperature: number;
     boil_time: number;
     mash_volume: number;
     sparge_volume: number;

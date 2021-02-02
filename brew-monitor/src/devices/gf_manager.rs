@@ -143,7 +143,7 @@ impl GrainfatherInternal {
             skip_start: false,
             hop_stand_time: 0,
 
-            delay: RecipeDelay::None,
+            delay: RecipeDelay::MinutesSeconds(120, 0),
 
             // TODO: to what extent does the GF support other character sets?  / unicode
             name: db_recipe_version_info.name.chars().take(16).map(|c| c.to_ascii_uppercase()).collect(),

@@ -39,28 +39,26 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             sparge_water_alert_state: Proto.defaultHeatSpargeWaterAlertState(),
 
             recipe: {
-                "boil_temperature": 55,
-                "boil_time": 9,
-                "mash_volume": 13.25,
-                "sparge_volume": 14.64,
+                "name": "DPC",
+                "boil_time": 60,
+                "mash_volume": 13.52,
+                "sparge_volume": 15.41,
                 "show_water_treatment_alert": false,
                 "show_sparge_counter": true,
                 "show_sparge_alert": true,
-                "delay": { "type": "MinutesSeconds", "data": [5, 0] },
+                "delay": { "type": "MinutesSeconds", "data": [120, 0] },
                 "skip_start": false,
-                "name": "DPC",
                 "hop_stand_time": 0,
                 "boil_power_mode": false,
                 "strike_temp_mode": false,
                 "boil_steps": [
-                    9,
-                    6,
-                    3
+                    60,
+                    30,
+                    5
                 ],
                 "mash_steps": [
-                    { "temperature": 25, "minutes": 3 },
-                    { "temperature": 35, "minutes": 3 },
-                    { "temperature": 45, "minutes": 3 }
+                    { "temperature": 62, "minutes": 75 },
+                    { "temperature": 75, "minutes": 10 },
                 ]
             },
         };
