@@ -66,7 +66,7 @@ impl TiltReadingsInserter {
 
         self.connection.lock_or_panic().execute(
             "insert into tilt_readings (at, which, temp, grav) values (?1, ?2, ?3, ?4)",
-            params![at, self.which, fahrenheit, gravity],
+            params![at.timestamp(), self.which, fahrenheit, gravity],
         )?;
 
         Ok(())

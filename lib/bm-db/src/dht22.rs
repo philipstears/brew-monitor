@@ -112,7 +112,7 @@ impl DHT22ReadingsInserter {
 
         self.connection.lock_or_panic().execute(
             "insert into dht22_readings (id, at, temp, humidity) values (?1, ?2, ?3, ?4)",
-            params![self.id, at, temperature, humidity],
+            params![self.id, at.timestamp(), temperature, humidity],
         )?;
 
         Ok(())

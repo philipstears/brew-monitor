@@ -12,6 +12,7 @@ pub use recipe::*;
 
 const V1: &'static str = include_str!("../scripts/v1.sql");
 const V2: &'static str = include_str!("../scripts/v2.sql");
+const V3: &'static str = include_str!("../scripts/v3.sql");
 
 #[derive(Debug)]
 pub enum OpenError {
@@ -29,6 +30,7 @@ enum Version {
     Uninitialized,
     Alpha1,
     Alpha2,
+    Alpha3,
 }
 
 #[derive(Clone)]
@@ -73,16 +75,24 @@ impl DB {
     fn upgrade_db(connection: &Connection) -> Result<(), OpenError> {
         match Self::get_db_version(&connection)? {
             Version::Uninitialized => {
+                println!("Executing V0 -> V1 schema script");
                 connection.execute_batch(V1)?;
                 return Self::upgrade_db(connection);
             }
 
             Version::Alpha1 => {
+                println!("Executing V1 -> V2 schema script");
                 connection.execute_batch(V2)?;
                 return Self::upgrade_db(connection);
             }
 
             Version::Alpha2 => {
+                println!("Executing V2 -> V3 schema script");
+                connection.execute_batch(V3)?;
+                return Self::upgrade_db(connection);
+            }
+
+            Version::Alpha3 => {
                 return Ok(());
             }
         }
@@ -95,6 +105,7 @@ impl DB {
             0 => Ok(Version::Uninitialized),
             1 => Ok(Version::Alpha1),
             2 => Ok(Version::Alpha2),
+            3 => Ok(Version::Alpha3),
             n => Err(OpenError::UnexpectedVersion(n)),
         }
     }
