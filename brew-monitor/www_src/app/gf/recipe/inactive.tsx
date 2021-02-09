@@ -1,11 +1,11 @@
 import * as React from "react";
 
-import { Recipe } from "../types";
+import { RecipeRequest } from "../types";
 import { Client }  from "../client";
 
 interface InactiveProps {
     client: Client;
-    recipe: Recipe;
+    recipeRequest: RecipeRequest;
 }
 
 export class Inactive extends React.Component<InactiveProps, {}> {
@@ -29,6 +29,6 @@ export class Inactive extends React.Component<InactiveProps, {}> {
     )
 
     handleSendRecipe = async () => {
-        await this.props.client.sendRecipe(this.props.recipe);
+        await this.props.client.sendRecipe(this.props.recipeRequest);
     };
 }

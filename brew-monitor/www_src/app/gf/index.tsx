@@ -20,7 +20,8 @@ export interface GrainfatherState {
     boil_alert_state: Proto.BoilAlertStateData;
     sparge_water_alert_state: Proto.HeatSpargeWaterAlertStateData;
 
-    recipe: Proto.Recipe;
+    recipe_request: Proto.RecipeRequest;
+    recipe: Proto.Recipe | null;
 }
 
 export class Grainfather extends React.Component<GrainfatherProps, GrainfatherState> {
@@ -38,29 +39,17 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             boil_alert_state: Proto.defaultBoilAlertState(),
             sparge_water_alert_state: Proto.defaultHeatSpargeWaterAlertState(),
 
-            recipe: {
+            recipe_request: {
                 "name": "DPC",
-                "boil_time": 60,
-                "mash_volume": 13.52,
-                "sparge_volume": 15.41,
-                "show_water_treatment_alert": false,
-                "show_sparge_counter": true,
-                "show_sparge_alert": true,
-                "delay": { "type": "MinutesSeconds", "data": [120, 0] },
-                "skip_start": false,
-                "hop_stand_time": 0,
-                "boil_power_mode": false,
-                "strike_temp_mode": false,
-                "boil_steps": [
-                    60,
-                    30,
-                    5
-                ],
-                "mash_steps": [
-                    { "temperature": 62, "minutes": 75 },
-                    { "temperature": 75, "minutes": 10 },
-                ]
+                "params": {
+                    "show_sparge_counter": true,
+                    "show_sparge_alert": true,
+                    "delay": { "type": "MinutesSeconds", "data": [120, 0] },
+                    "boil_power_mode": true,
+                }
             },
+
+            recipe: null,
         };
 
         this.openWebSocket();
@@ -84,7 +73,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
     render = () => (
         <React.Fragment>
             <div id="bm-overview-panel">
-                <h2 className="bm-overview-panel-header">{this.state.recipe.name}</h2>
+                <h2 className="bm-overview-panel-header">{this.state.recipe_request.name}</h2>
 
                 <Heat
                     client={this.state.client}
@@ -106,6 +95,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                     boilAlertState={this.state.boil_alert_state}
                     spargeWaterAlertState={this.state.sparge_water_alert_state}
                     recipe={this.state.recipe}
+                    recipeRequest={this.state.recipe_request}
                     temp={this.state.temp}
                 />
             </div>
@@ -134,6 +124,24 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
             case "HeatSpargeWaterAlertState":
                 this.setState({...this.state, sparge_water_alert_state: notification.data});
                 break;
+            case "ActiveRecipeChanged":
+                this.setActiveRecipe(notification.data);
+                break;
         }
     };
+
+    setActiveRecipe = async (data: Proto.ActiveRecipeChangedData) => {
+        let recipeUrl = `${window.location.protocol}//${window.location.host}/recipes/by-id/${data.id}/${data.version}`;
+
+        let response = await fetch(recipeUrl, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        let recipe = await response.json();
+
+        console.log("Got recipe", recipe);
+    }
 }

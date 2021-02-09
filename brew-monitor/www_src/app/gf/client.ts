@@ -33,7 +33,7 @@ export class Client {
         });
     }
 
-    async sendRecipe(recipe: Proto.Recipe) {
+    async sendRecipe(recipe: Proto.RecipeRequest) {
         await fetch(this.recipeUrl, {
             method: "POST",
             headers: {
@@ -48,7 +48,7 @@ export class Client {
             type: "UpdateActiveTimer",
             data: {
                 type: "MinutesSeconds",
-                data: [0, 1],
+                data: [spec.minutes, spec.seconds],
             }
         });
     }

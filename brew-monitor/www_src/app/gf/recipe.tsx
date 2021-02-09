@@ -14,7 +14,8 @@ interface RecipeProps {
     timer: Proto.TimerData;
     boilAlertState: Proto.BoilAlertStateData;
     spargeWaterAlertState: Proto.HeatSpargeWaterAlertStateData;
-    recipe: Proto.Recipe;
+    recipe: Proto.Recipe | null;
+    recipeRequest: Proto.RecipeRequest;
     temp: Proto.TempData;
 }
 
@@ -24,8 +25,12 @@ export class Recipe extends React.Component<RecipeProps, {}> {
     }
 
     render() {
+        if (!this.props.recipe) {
+            return <Inactive client={this.props.client} recipeRequest={this.props.recipeRequest} />;
+        }
+
         if (!this.props.status1.auto_mode_active) {
-            return <Inactive client={this.props.client} recipe={this.props.recipe} />;
+            return <Inactive client={this.props.client} recipeRequest={this.props.recipeRequest} />;
         }
 
         if (this.props.status1.delayed_heat_mode_active) {

@@ -6,14 +6,14 @@ use serde::{Deserialize, Serialize};
 use super::WrappedConnection;
 
 pub type RecipeId = i64;
-pub type Version = u32;
+pub type RecipeVersion = u32;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RecipeInfo {
     pub id: RecipeId,
     pub name: String,
     pub created_on: DateTime<Utc>,
-    pub latest_version: Option<Version>,
+    pub latest_version: Option<RecipeVersion>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -21,9 +21,36 @@ pub struct RecipeVersionInfo {
     pub id: RecipeId,
     pub name: String,
     pub created_on: DateTime<Utc>,
-    pub version: Version,
+    pub version: RecipeVersion,
     pub version_data: bm_recipe::Recipe,
     pub version_created_on: DateTime<Utc>,
+}
+
+impl RecipeVersionInfo {
+    fn from_row(row: &Row) -> Result<RecipeVersionInfo> {
+        let version_data: String = row.get(4)?;
+
+        Ok(RecipeVersionInfo {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            created_on: Utc.timestamp(row.get(2)?, 0),
+            version: row.get(3)?,
+            version_data: serde_json::from_str::<bm_recipe::Recipe>(&version_data).unwrap(),
+            version_created_on: Utc.timestamp(row.get(5)?, 0),
+        })
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum RecipeSelector<'a> {
+    ByName(&'a str),
+    ById(RecipeId),
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum RecipeVersionSelector {
+    Latest,
+    SpecificVersion(RecipeVersion),
 }
 
 #[derive(Clone)]
@@ -54,39 +81,85 @@ impl RecipeData {
         recipes(&connection)
     }
 
-    pub fn get_recipe_latest(&self, name: &str) -> Result<Option<RecipeVersionInfo>> {
+    pub fn get_recipe(
+        &self,
+        recipe: RecipeSelector,
+        version: RecipeVersionSelector,
+    ) -> Result<Option<RecipeVersionInfo>> {
         let connection = self.0.lock_or_panic();
 
-        let mut statement = connection.prepare(
-            "
-            select
-              r.id,r.name,r.created_on,
-              v.version_id,v.data,v.created_on
-            from recipe_versions v
-            inner join recipes r
-            on v.recipe_id = r.id
-            and v.version_id = r.latest_version
-            where r.name = ?
-            ",
-        )?;
+        match (recipe, version) {
+            (RecipeSelector::ByName(name), RecipeVersionSelector::Latest) => {
+                let mut statement = connection.prepare(
+                    "
+                    select
+                      r.id,r.name,r.created_on,
+                      v.version_id,v.data,v.created_on
+                    from recipe_versions v
+                    inner join recipes r
+                    on v.recipe_id = r.id
+                    and v.version_id = r.latest_version
+                    where r.name = ?
+                    ",
+                )?;
 
-        statement
-            .query_row(params![name], |row| {
-                let version_data: String = row.get(4)?;
+                statement.query_row(params![name], RecipeVersionInfo::from_row).optional()
+            }
 
-                Ok(RecipeVersionInfo {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                    created_on: Utc.timestamp(row.get(2)?, 0),
-                    version: row.get(3)?,
-                    version_data: serde_json::from_str::<bm_recipe::Recipe>(&version_data).unwrap(),
-                    version_created_on: Utc.timestamp(row.get(5)?, 0),
-                })
-            })
-            .optional()
+            (RecipeSelector::ById(id), RecipeVersionSelector::Latest) => {
+                let mut statement = connection.prepare(
+                    "
+                    select
+                      r.id,r.name,r.created_on,
+                      v.version_id,v.data,v.created_on
+                    from recipe_versions v
+                    inner join recipes r
+                    on v.recipe_id = r.id
+                    and v.version_id = r.latest_version
+                    where r.id = ?
+                    ",
+                )?;
+
+                statement.query_row(params![id], RecipeVersionInfo::from_row).optional()
+            }
+
+            (RecipeSelector::ByName(name), RecipeVersionSelector::SpecificVersion(version)) => {
+                let mut statement = connection.prepare(
+                    "
+                    select
+                      r.id,r.name,r.created_on,
+                      v.version_id,v.data,v.created_on
+                    from recipe_versions v
+                    inner join recipes r
+                    on v.recipe_id = r.id
+                    where r.name = ?
+                    and v.version_id = ?
+                    ",
+                )?;
+
+                statement.query_row(params![name, version], RecipeVersionInfo::from_row).optional()
+            }
+
+            (RecipeSelector::ById(id), RecipeVersionSelector::SpecificVersion(version)) => {
+                let mut statement = connection.prepare(
+                    "
+                    select
+                      r.id,r.name,r.created_on,
+                      v.version_id,v.data,v.created_on
+                    from recipe_versions v
+                    inner join recipes r
+                    on v.recipe_id = r.id
+                    where r.id = ?
+                    and v.version_id = ?
+                    ",
+                )?;
+
+                statement.query_row(params![id, version], RecipeVersionInfo::from_row).optional()
+            }
+        }
     }
 
-    pub fn insert_version(&self, name: &str, recipe: &bm_recipe::Recipe) -> Result<Version> {
+    pub fn insert_version(&self, name: &str, recipe: &bm_recipe::Recipe) -> Result<RecipeVersion> {
         let mut connection = self.0.lock_or_panic();
         let transaction = connection.transaction()?;
 
@@ -127,7 +200,7 @@ impl RecipeData {
     }
 }
 
-fn recipe_version(connection: &Connection, recipe_id: RecipeId, version: Version) -> Result<bm_recipe::Recipe> {
+fn recipe_version(connection: &Connection, recipe_id: RecipeId, version: RecipeVersion) -> Result<bm_recipe::Recipe> {
     let mut statement =
         connection.prepare("select data from recipe_versions where recipe_id = ? AND version_id = ?")?;
 

@@ -2,7 +2,7 @@ use super::command::{finish_command, COMMAND_LEN};
 use std::fmt::Write;
 
 /// The amount of time to wait before automatically starting a recipe.
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum RecipeDelay {
     None,
@@ -10,7 +10,7 @@ pub enum RecipeDelay {
 }
 
 /// The temperature and duration for a step in the mashing process for a recipe.
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct MashStep {
     pub temperature: u8,
     pub minutes: u8,
@@ -18,7 +18,7 @@ pub struct MashStep {
 
 /// All the information required by the Grainfather controller in its
 /// automatic mode.
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Recipe {
     /// The total duration of the boil
     pub boil_time: u8,

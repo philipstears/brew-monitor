@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+cargo build
+
+sudo --validate
+
+sudo --non-interactive setcap 'cap_net_raw,cap_net_admin+eip' target/debug/brew-monitor
+
+target/debug/brew-monitor

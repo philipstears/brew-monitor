@@ -8,6 +8,14 @@ use std::sync::{
     Arc, Mutex, MutexGuard,
 };
 
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct RecipeModeParams {
+    pub show_sparge_counter: bool,
+    pub show_sparge_alert: bool,
+    pub boil_power_mode: bool,
+    pub delay: RecipeDelay,
+}
+
 #[derive(Clone, Debug)]
 pub enum ManagerOrClientNotification {
     ClientNotification(Notification),
@@ -19,6 +27,7 @@ pub enum ManagerOrClientNotification {
 pub enum ManagerNotification {
     BoilAlertState(BoilAlertState),
     HeatSpargeWaterAlertState(HeatSpargeWaterAlertState),
+    ActiveRecipeChanged(Option<ActiveRecipe>),
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -29,6 +38,12 @@ pub struct BoilAlertState {
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct HeatSpargeWaterAlertState {
     pub visible: bool,
+}
+
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+pub struct ActiveRecipe {
+    pub id: db::RecipeId,
+    pub version: db::RecipeVersion,
 }
 
 #[derive(Clone)]
@@ -47,8 +62,12 @@ impl GrainfatherManager {
         self.lock().command(command)
     }
 
-    pub fn send_recipe(&self, recipe: &db::RecipeVersionInfo) -> Result<(), btleplug::Error> {
-        self.lock().send_recipe(recipe)
+    pub fn send_recipe(
+        &self,
+        recipe: &db::RecipeVersionInfo,
+        params: &RecipeModeParams,
+    ) -> Result<(), btleplug::Error> {
+        self.lock().send_recipe(recipe, params)
     }
 
     pub fn subscribe(&mut self) -> Receiver<ManagerOrClientNotification> {
@@ -80,31 +99,35 @@ impl GrainfatherInternal {
     fn set_client(&mut self, client: GrainfatherClient) {
         let have_valid_client = self.client.as_ref().map(|client| client.is_connected()).unwrap_or(false);
 
-        if !have_valid_client {
-            println!("Setting grainfather");
-
-            let subscribers = self.subscribers.clone();
-            let state = self.state.clone();
-
-            client
-                .subscribe(Box::new(move |notification| {
-                    send_notification_to_subscribers(
-                        subscribers.as_ref(),
-                        &ManagerOrClientNotification::ClientNotification(notification.clone()),
-                    );
-
-                    // Sometimes this will generate an synthetic notification, e.g.
-                    // for boil additions
-                    if let Some(synthetic_notifications) = state.lock().unwrap().handle_notification(&notification) {
-                        for synthetic_notification in synthetic_notifications.iter() {
-                            send_notification_to_subscribers(subscribers.as_ref(), &synthetic_notification);
-                        }
-                    }
-                }))
-                .unwrap();
-
-            self.client = Some(client);
+        if have_valid_client {
+            return;
         }
+
+        println!("Setting grainfather");
+
+        let subscribers = self.subscribers.clone();
+        let state = self.state.clone();
+
+        send_notification_to_subscribers(subscribers.as_ref(), &state.lock().unwrap().get_active_recipe_notification());
+
+        client
+            .subscribe(Box::new(move |notification| {
+                send_notification_to_subscribers(
+                    subscribers.as_ref(),
+                    &ManagerOrClientNotification::ClientNotification(notification.clone()),
+                );
+
+                // Sometimes this will generate an synthetic notification, e.g.
+                // for boil additions
+                if let Some(synthetic_notifications) = state.lock().unwrap().handle_notification(&notification) {
+                    for synthetic_notification in synthetic_notifications.iter() {
+                        send_notification_to_subscribers(subscribers.as_ref(), &synthetic_notification);
+                    }
+                }
+            }))
+            .unwrap();
+
+        self.client = Some(client);
     }
 
     pub fn command(&mut self, command: &Command) -> Result<(), btleplug::Error> {
@@ -118,7 +141,12 @@ impl GrainfatherInternal {
         result
     }
 
-    pub fn send_recipe(&mut self, db_recipe_version_info: &db::RecipeVersionInfo) -> Result<(), btleplug::Error> {
+    pub fn send_recipe(
+        &mut self,
+        db_recipe_version_info: &db::RecipeVersionInfo,
+        params: &RecipeModeParams,
+    ) -> Result<(), btleplug::Error> {
+        let mut state = self.state.lock().unwrap();
         let client = self.client.as_ref().ok_or(btleplug::Error::NotConnected)?;
 
         let db_recipe = &db_recipe_version_info.version_data;
@@ -133,17 +161,17 @@ impl GrainfatherInternal {
 
         let gf_recipe = gf::Recipe {
             strike_temp_mode: false,
+            show_water_treatment_alert: false,
+            skip_start: false,
 
             boil_time: db_recipe.boil_time as u8,
-            boil_power_mode: false,
+            boil_power_mode: params.boil_power_mode,
 
-            show_water_treatment_alert: false,
-            show_sparge_counter: true,
-            show_sparge_alert: true,
-            skip_start: false,
+            show_sparge_counter: params.show_sparge_counter,
+            show_sparge_alert: params.show_sparge_alert,
             hop_stand_time: 0,
 
-            delay: RecipeDelay::MinutesSeconds(120, 0),
+            delay: params.delay.clone(),
 
             // TODO: to what extent does the GF support other character sets?  / unicode
             name: db_recipe_version_info.name.chars().take(16).map(|c| c.to_ascii_uppercase()).collect(),
@@ -163,7 +191,18 @@ impl GrainfatherInternal {
                 .collect(),
         };
 
-        client.send_recipe(&gf_recipe)
+        match client.send_recipe(&gf_recipe) {
+            result @ Ok(()) => {
+                state.active_recipe = Some(ActiveRecipe {
+                    id: db_recipe_version_info.id,
+                    version: db_recipe_version_info.version,
+                });
+                send_notification_to_subscribers(self.subscribers.as_ref(), &state.get_active_recipe_notification());
+                result
+            }
+
+            result => result,
+        }
     }
 
     pub fn subscribe(&mut self) -> Receiver<ManagerOrClientNotification> {
@@ -196,6 +235,10 @@ struct State {
     temp_current: i32,
     // Timer
     timer_active: bool,
+
+    // Synthetic state
+    active_recipe: Option<ActiveRecipe>,
+
     // Boil Alert Visible
     boil_alert_active: bool,
     // Heat Sparge Water Alert Visible
@@ -203,6 +246,12 @@ struct State {
 }
 
 impl State {
+    fn get_active_recipe_notification(&self) -> ManagerOrClientNotification {
+        ManagerOrClientNotification::ManagerNotification(ManagerNotification::ActiveRecipeChanged(
+            self.active_recipe.clone(),
+        ))
+    }
+
     fn handle_command(&mut self, command: &Command) -> Option<ManagerOrClientNotification> {
         let maybe_dismiss_alert = match command {
             Command::DismissAlert => true,

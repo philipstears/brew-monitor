@@ -54,6 +54,7 @@ export type Notification
     | TimerNotification
     | BoilAlertStateNotification
     | HeatSpargeWaterAlertStateNotification
+    | ActiveRecipeChangedNotification
     ;
 
 export interface Status1Notification {
@@ -126,6 +127,16 @@ export interface HeatSpargeWaterAlertStateData {
     visible: boolean;
 }
 
+interface ActiveRecipeChangedNotification {
+    type: "ActiveRecipeChanged";
+    data: ActiveRecipeChangedData;
+}
+
+export interface ActiveRecipeChangedData {
+    id: number;
+    version: number;
+}
+
 // -----------------------------------------------------------------------------
 // Recipes
 // -----------------------------------------------------------------------------
@@ -141,25 +152,63 @@ export interface RecipeDelayMinutesSeconds {
 }
 
 export interface RecipeMashStep {
-    temperature: number;
-    minutes: number;
+    name: String,
+    time: number;
+    temp: number;
+}
+
+type BoilAdditionType = BoilAdditionHop | BoilAdditionYeastNutrient | BoilAdditionOther;
+
+export interface BoilAdditionHop {
+    type: "Hop";
+}
+
+export interface BoilAdditionYeastNutrient {
+    type: "YeastNutrient";
+}
+
+export interface BoilAdditionOther {
+    type: "Other";
+    data: { description: String; };
+}
+
+type BoilAmount = BoilAmountMass | BoilAmountVolume;
+
+export interface BoilAmountMass {
+    type: "Mass";
+    data: number;
+}
+
+export interface BoilAmountVolume {
+    type: "Volume";
+    data: number;
+}
+
+export interface RecipeBoilAddition {
+    kind: BoilAdditionType;
+    name: string;
+    amount: BoilAmount;
+    time: number;
 }
 
 export interface Recipe {
-    boil_time: number;
-    mash_volume: number;
-    sparge_volume: number;
-    show_water_treatment_alert: boolean;
+    batchSize: number;
+    boilSize: number;
+    boilTime: number;
+    mashSteps: RecipeMashStep[];
+    boilAdditions: RecipeBoilAddition[];
+}
+
+export interface RecipeRequest {
+    name: string;
+    params: RecipeModeParams;
+}
+
+export interface RecipeModeParams {
+    boil_power_mode: boolean;
     show_sparge_counter: boolean;
     show_sparge_alert: boolean;
     delay: RecipeDelay;
-    skip_start: boolean;
-    name: string;
-    hop_stand_time: number;
-    boil_power_mode: boolean;
-    strike_temp_mode: boolean;
-    boil_steps: number[];
-    mash_steps: RecipeMashStep[];
 }
 
 export function defaultStatus1(): Status1Data {

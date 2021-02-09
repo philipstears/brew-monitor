@@ -49,7 +49,7 @@ export class Active extends React.Component<ActiveProps, {}> {
 
     stepName() {
         let step_number = this.props.status1.step_number;
-        let mash_steps = this.props.recipe.mash_steps.length;
+        let mash_steps = this.props.recipe.mashSteps.length;
 
         if (step_number == 1 && this.isInRamp()) {
             return "Mash In";
@@ -105,15 +105,15 @@ export class Active extends React.Component<ActiveProps, {}> {
     }
 
     isInSparge(): boolean {
-        return this.props.status1.step_number == 1 + this.props.recipe.mash_steps.length;
+        return this.props.status1.step_number == 1 + this.props.recipe.mashSteps.length;
     }
 
     isInBoil(): boolean {
-        return this.props.status1.step_number == 2 + this.props.recipe.mash_steps.length;
+        return this.props.status1.step_number == 2 + this.props.recipe.mashSteps.length;
     }
 
     isDone(): boolean {
-        return this.props.status1.step_number == 3 + this.props.recipe.mash_steps.length;
+        return this.props.status1.step_number == 3 + this.props.recipe.mashSteps.length;
     }
 
     isInRamp(): boolean {
@@ -188,7 +188,7 @@ export class Active extends React.Component<ActiveProps, {}> {
 
     maybeRenderSkipToNextStep() {
         let canSkip =
-            this.props.status1.step_number <= this.props.recipe.mash_steps.length &&
+            this.props.status1.step_number <= this.props.recipe.mashSteps.length &&
             this.props.timer.active;
 
         if (canSkip) {

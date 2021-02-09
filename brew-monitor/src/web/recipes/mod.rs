@@ -1,44 +1,28 @@
 use bm_beerxml;
-use bm_db::DB;
+use bm_db::{RecipeId, RecipeSelector, RecipeVersion, RecipeVersionSelector, DB};
 use bm_recipe;
-use chrono::{DateTime, Utc};
 use warp::{
     reject::Rejection,
     reply::{Reply, Response},
     Filter,
 };
 
-struct NewRecipeRequest {
-    name: String,
-}
-
-struct NewRecipeVersionRequest {
-    data: bm_recipe::Recipe,
-}
-
-struct ExistingRecipe {
-    name: String,
-    created_on: DateTime<Utc>,
-}
-
-struct ExistingRecipeVersion {
-    created_on: DateTime<Utc>,
-    data: bm_recipe::Recipe,
-}
-
 pub fn route(db: DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path::path("recipes")
-        .and(resources::recipes(db.clone()).or(resources::recipe(db.clone())).recover(resources::handle_rejection))
+    let recipe_routes = resources::recipes(&db)
+        .or(resources::latest_recipe_by_name(&db))
+        .or(resources::latest_recipe_by_id(&db))
+        .or(resources::specific_recipe_by_name(&db))
+        .or(resources::specific_recipe_by_id(&db))
+        .recover(resources::handle_rejection);
+
+    warp::path::path("recipes").and(recipe_routes)
 }
 
 mod resources {
     use super::*;
 
-    pub(super) fn recipes(db: DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-        let get = warp::path::end()
-            .and(warp::filters::method::get())
-            .and(with_db(db.clone()))
-            .and_then(handlers::recipes_get);
+    pub(super) fn recipes(db: &DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        let get = warp::path::end().and(warp::filters::method::get()).and(with_db(db)).and_then(handlers::recipes_get);
 
         let post = warp::path::end()
             .and(warp::filters::method::post())
@@ -46,29 +30,50 @@ mod resources {
             // TODO: this returns 400 if it doesn't match, rather than 406
             .and(require_xml())
             .and(warp::body::bytes())
-            .and(with_db(db.clone()))
+            .and(with_db(db))
             .and_then(handlers::recipes_import);
 
         get.or(post)
     }
 
-    pub(super) fn recipe(db: DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-        let get = warp::path!(String)
+    pub(super) fn latest_recipe_by_name(db: &DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        let get = warp::path!("by-name" / String)
             .and(warp::filters::method::get())
-            .and(with_db(db.clone()))
-            .and_then(handlers::recipe_get);
+            .and(with_db(db))
+            .and_then(handlers::get_latest_recipe_by_name);
 
-        let put = warp::path!(String)
-            .and(warp::filters::method::put())
-            .and(warp::body::content_length_limit(65_536))
-            //.and(warp::body::json())
-            .and(with_db(db.clone()))
-            .and_then(handlers::recipe_upsert);
-
-        get.or(put)
+        get
     }
 
-    fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {
+    pub(super) fn specific_recipe_by_name(db: &DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        let get = warp::path!("by-name" / String / RecipeVersion)
+            .and(warp::filters::method::get())
+            .and(with_db(db))
+            .and_then(handlers::get_specific_recipe_by_name);
+
+        get
+    }
+
+    pub(super) fn latest_recipe_by_id(db: &DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        let get = warp::path!("by-id" / RecipeId)
+            .and(warp::filters::method::get())
+            .and(with_db(db))
+            .and_then(handlers::get_latest_recipe_by_id);
+
+        get
+    }
+
+    pub(super) fn specific_recipe_by_id(db: &DB) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        let get = warp::path!("by-id" / RecipeId / RecipeVersion)
+            .and(warp::filters::method::get())
+            .and(with_db(db))
+            .and_then(handlers::get_specific_recipe_by_id);
+
+        get
+    }
+
+    fn with_db(db: &DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {
+        let db = db.clone();
         warp::any().map(move || db.clone())
     }
 
@@ -127,25 +132,48 @@ mod resources {
 mod handlers {
     use super::*;
 
-    pub(super) async fn recipe_get(name: String, db: DB) -> Result<Response, Rejection> {
-        let reply = match db.recipe().get_recipe_latest(&name) {
+    pub(super) async fn get_latest_recipe_by_name(name: String, db: DB) -> Result<Response, Rejection> {
+        recipe_get_core(RecipeSelector::ByName(&name), RecipeVersionSelector::Latest, db)
+    }
+
+    pub(super) async fn get_specific_recipe_by_name(
+        name: String,
+        version: RecipeVersion,
+        db: DB,
+    ) -> Result<Response, Rejection> {
+        recipe_get_core(RecipeSelector::ByName(&name), RecipeVersionSelector::SpecificVersion(version), db)
+    }
+
+    pub(super) async fn get_latest_recipe_by_id(id: RecipeId, db: DB) -> Result<Response, Rejection> {
+        recipe_get_core(RecipeSelector::ById(id), RecipeVersionSelector::Latest, db)
+    }
+
+    pub(super) async fn get_specific_recipe_by_id(
+        id: RecipeId,
+        version: RecipeVersion,
+        db: DB,
+    ) -> Result<Response, Rejection> {
+        recipe_get_core(RecipeSelector::ById(id), RecipeVersionSelector::SpecificVersion(version), db)
+    }
+
+    fn recipe_get_core<'a>(
+        recipe: RecipeSelector<'a>,
+        version: RecipeVersionSelector,
+        db: DB,
+    ) -> Result<Response, Rejection> {
+        let reply = match db.recipe().get_recipe(recipe, version) {
             Ok(Some(info)) => warp::reply::json(&info.version_data).into_response(),
             Ok(None) => {
-                eprintln!("Couldn't find recipe {}", name);
+                eprintln!("Couldn't find recipe {:?}:{:?}", recipe, version);
                 warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::NOT_FOUND).into_response()
             }
             Err(err) => {
-                eprintln!("Couldn't get recipe {}: {:?}", name, err);
+                eprintln!("Couldn't get recipe {:?}:{:?}: {:?}", recipe, version, err);
                 warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::INTERNAL_SERVER_ERROR)
                     .into_response()
             }
         };
 
-        Ok(reply)
-    }
-
-    pub(super) async fn recipe_upsert(_alias: String, _db: DB) -> Result<Response, Rejection> {
-        let reply = warp::reply::with_status(warp::reply::reply(), warp::http::StatusCode::CREATED).into_response();
         Ok(reply)
     }
 

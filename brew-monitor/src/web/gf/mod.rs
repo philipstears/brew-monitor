@@ -1,10 +1,10 @@
 mod ws;
 use ws::GrainfatherWebSocketHandler;
 
-use crate::devices::gf_manager::GrainfatherManager;
+use crate::devices::gf_manager::{GrainfatherManager, RecipeModeParams};
 use crate::web::warp_helpers;
 
-use bm_db::DB;
+use bm_db::{RecipeSelector, RecipeVersionSelector, DB};
 use bm_grainfather::{self as gf};
 use serde::{Deserialize, Serialize};
 use warp::{
@@ -18,6 +18,7 @@ use warp::{
 #[derive(Debug, Serialize, Deserialize)]
 struct ActivateRecipeBody {
     name: String,
+    params: RecipeModeParams,
 }
 
 pub fn route(db: DB, gf: GrainfatherManager) -> BoxedFilter<(impl Reply,)> {
@@ -68,8 +69,8 @@ mod handlers {
         gf: GrainfatherManager,
         db: DB,
     ) -> Result<Response, Rejection> {
-        let reply = match db.recipe().get_recipe_latest(&body.name) {
-            Ok(Some(recipe)) => match gf.send_recipe(&recipe) {
+        let reply = match db.recipe().get_recipe(RecipeSelector::ByName(&body.name), RecipeVersionSelector::Latest) {
+            Ok(Some(recipe)) => match gf.send_recipe(&recipe, &body.params) {
                 Ok(()) => warp::reply::json(&GrainfatherResponse {}).into_response(),
                 Err(btleplug::Error::NotConnected) => {
                     warp::reply::with_status(warp::reply(), warp::http::StatusCode::BAD_REQUEST).into_response()
