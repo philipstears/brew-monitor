@@ -5,13 +5,13 @@ function useQuery(): URLSearchParams {
   return new URLSearchParams(window.location.search);
 }
 
-export interface TiltProps {
-    color: string;
+export interface DHT22Props {
+    alias: string;
 }
 
-export interface TiltState {
-    gravity_data: ChartDatum[],
+export interface DHT22State {
     temperature_data: ChartDatum[],
+    humidity_data: ChartDatum[],
     from: string | null,
     to: string | null;
 }
@@ -20,22 +20,22 @@ type ChartDatum = [number, number];
 
 export interface Reading {
     at: string,
-    fahrenheit: number,
-    gravity: number,
+    temp: number,
+    humidity: number,
 }
 
-export class Tilt extends React.Component<TiltProps, TiltState> {
-    constructor(props: TiltProps) {
+export class DHT22 extends React.Component<DHT22Props, DHT22State> {
+    constructor(props: DHT22Props) {
         let query = useQuery();
 
         super(props);
         this.state = {
-            gravity_data: [],
             temperature_data: [],
+            humidity_data: [],
             from: query.get("from"),
             to: query.get("to"),
         };
-        this.refreshTiltData();
+        this.refreshDHT22Data();
     }
 
     render() {
@@ -57,58 +57,37 @@ export class Tilt extends React.Component<TiltProps, TiltState> {
                 },
                 yaxis: [
                     {
-                        name: "Gravity",
-                        min: 1000,
-                        max: (v: number) => {
-                            // Round up to the nearest 10 gravity points
-                            return Math.round((v + 5) / 10) * 10;
-                        },
+                        name: "Temperature",
                     },
                     {
-                        name: "Temperature",
+                        name: "Humidity",
                         opposite: true,
                     }
                 ],
-                annotations: {
-                    yaxis: [
-                        {
-                            y: 1007,
-                            borderColor: '#058005',
-                            label: {
-                                borderColor: '#058005',
-                                style: {
-                                    color: '#fff',
-                                    background: '#058005'
-                                },
-                                text: 'Expected FG'
-                            }
-                        }
-                    ]
-                },
                 tooltip: {
                     x: {
                         format: "HH:mm",
                     },
                 },
                 colors: [
-                    "#2E93fA",
                     "#DF0000",
+                    "#2E93fA",
                 ],
             },
             series: [
                 {
-                    name: "Gravity",
-                    data: this.state.gravity_data,
-                },
-                {
                     name: "Temperature",
                     data: this.state.temperature_data,
+                },
+                {
+                    name: "Humidity",
+                    data: this.state.humidity_data,
                 }
             ],
         };
 
         return (
-            <div className="tilt-chart">
+            <div className="dht22-chart">
                 <Chart
                     options={graph.options}
                     series={graph.series}
@@ -120,8 +99,8 @@ export class Tilt extends React.Component<TiltProps, TiltState> {
         );
     }
 
-    private async refreshTiltData() {
-        const url = `${window.location.protocol}//${window.location.host}/tilt/${this.props.color}?from=${this.state.from}&to=${this.state.to}`;
+    private async refreshDHT22Data() {
+        const url = `${window.location.protocol}//${window.location.host}/dht22/${this.props.alias}/readings?from=${this.state.from}&to=${this.state.to}`;
 
         let response =
             await fetch(url, {
@@ -133,23 +112,23 @@ export class Tilt extends React.Component<TiltProps, TiltState> {
 
         let readings: Reading[] = await response.json();
 
-        let grav_data = readings.map(({at, gravity}) => (
+        let temp_data = readings.map(({at, temp}) => (
             [
                 new Date(at).getTime(),
-                gravity,
+                temp / 100,
             ] as ChartDatum
         ));
 
-        let temp_data = readings.map(({at, fahrenheit}) => (
+        let humidity_data = readings.map(({at, humidity}) => (
             [
                 new Date(at).getTime(),
-                fahrenheit
+                humidity / 100
             ] as ChartDatum
         ));
 
         this.setState({
-            gravity_data: accumulateReadings(grav_data),
-            temperature_data: accumulateReadings(temp_data).map(([at, temp]) => [at, Math.round((temp - 32) * 5 / 9)])
+            temperature_data: accumulateReadings(temp_data),
+            humidity_data: accumulateReadings(humidity_data),
         });
     }
 }
