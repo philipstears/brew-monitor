@@ -44,7 +44,7 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
                 "params": {
                     "show_sparge_counter": true,
                     "show_sparge_alert": true,
-                    "delay": { "type": "MinutesSeconds", "data": [120, 0] },
+                    "delay": { "type": "None" }, //{ "type": "MinutesSeconds", "data": [120, 0] },
                     "boil_power_mode": true,
                 }
             },
@@ -142,6 +142,8 @@ export class Grainfather extends React.Component<GrainfatherProps, GrainfatherSt
 
         let recipe = await response.json();
 
-        console.log("Got recipe", recipe);
+        this.setState({ recipe });
+
+        console.log("Applied recipe", recipe);
     }
 }

@@ -135,7 +135,7 @@ impl Client {
 
     /// Sends a recipe to the to the grainfather controller.
     pub fn send_recipe(&self, recipe: &Recipe) -> Result<(), Error> {
-        println!("[S]: Recipe with name {}", recipe.name);
+        println!("[S]: Recipe with name {}: {:#?}", recipe.name, recipe);
 
         // self.gf.command(&self.write, &Command::SetLocalBoilTemperature(recipe.boil_temperature).to_vec())?;
 
@@ -144,7 +144,8 @@ impl Client {
         // std::thread::sleep(std::time::Duration::from_millis(200));
 
         for command in recipe.to_commands().iter() {
-            self.gf.command(&self.write, command.as_ref())?
+            println!("Sending command with len {}: {:?}", command.len(), std::str::from_utf8(command));
+            self.gf.command(&self.write, command.as_ref())?;
         }
 
         Ok(())
